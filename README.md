@@ -11,7 +11,7 @@ This project provides tools to fetch, process, and visualize data about active s
 
 ## Directory Structure
 ```text
-/Users/gustaw/Documents/Projects/dane_gov
+/Users/gustaw/Documents/Projects/sawmills-poland
 ├── data/                    # Heavy datasets and raw files
 │   ├── raw/                 # Raw JSONL dumps from CEIDG, raw KRS JSONs
 │   └── processed/           # Final CSVs ready for the dashboard (tartaki_ceidg.csv, tartaki_full.csv)
