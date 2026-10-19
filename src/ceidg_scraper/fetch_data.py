@@ -11,7 +11,7 @@ import requests
 
 
 
-TOKEN = os.getenv("CEIDG_TOKEN", "eyJraWQiOiJjZWlkZyIsImFsZyI6IkhTNTEyIn0.eyJnaXZlbl9uYW1lIjoiTWF4IiwicGVzZWwiOiI5OTAyMDIxMDY1MiIsImlhdCI6MTc5MDA2NTQ5NSwiZmFtaWx5X25hbWUiOiJTenBlcmxpxYRza2kiLCJjbGllbnRfaWQiOiJVU0VSLTk5MDIwMjEwNjUyLU1BWC1TWlBFUkxJxYNTS0kifQ.mswywrHBcFHUl_f1YHJPZaRyG0riNcaX4KNE862VsOx98jvg_CGlKGxreKZUiExipn9xvNmZeo5kxtp2KrdUZA")
+TOKEN = os.getenv("CEIDG_TOKEN")
 
 BASE_URL = "https://dane.biznes.gov.pl/api/ceidg/v3"
 FIRMY_URL = f"{BASE_URL}/firmy"

@@ -17,6 +17,7 @@ const miastoFilter = document.getElementById('miastoFilter');
 const kodFilter = document.getElementById('kodFilter');
 const searchFilter = document.getElementById('searchFilter');
 const contactedFilter = document.getElementById('contactedFilter');
+const vatFilter = document.getElementById('vatFilter');
 const pkdFilter = document.getElementById('pkdFilter');
 const hideNanRegion = document.getElementById('hideNanRegion');
 const resetFilters = document.getElementById('resetFilters');
@@ -73,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     statusFilter.addEventListener('change', applyFilters);
     hideNanRegion.addEventListener('change', applyFilters);
     contactedFilter.addEventListener('change', applyFilters);
+    vatFilter.addEventListener('change', applyFilters);
     pkdFilter.addEventListener('change', applyFilters);
     miastoFilter.addEventListener('input', applyFilters);
     kodFilter.addEventListener('input', applyFilters);
@@ -107,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         kodFilter.value = '';
         searchFilter.value = '';
         contactedFilter.value = 'ALL';
+        vatFilter.value = 'ALL';
         pkdFilter.value = '';
         selectedYearFilter = null;
         updateYearFilterUI();
@@ -185,8 +188,9 @@ function updateTabStyles() {
 function loadData() {
     Promise.all([
         fetch('../../data/processed/tartaki_ceidg.csv').then(res => res.ok ? res.text() : null).catch(() => null),
-        fetch('../../data/processed/tartaki_full.csv').then(res => res.ok ? res.text() : null).catch(() => null)
-    ]).then(([ceidgText, krsText]) => {
+        fetch('../../data/processed/tartaki_full.csv').then(res => res.ok ? res.text() : null).catch(() => null),
+        fetch('../../data/processed/verification.csv').then(res => res.ok ? res.text() : null).catch(() => null)
+    ]).then(([ceidgText, krsText, verifText]) => {
         let tempData = [];
         
         if (ceidgText) {
@@ -226,6 +230,16 @@ function loadData() {
             tempData = tempData.concat(parsed.data);
         }
         
+        const verification = {};
+        if (verifText) {
+            Papa.parse(verifText, { header: true, skipEmptyLines: true }).data.forEach(v => { verification[v.nip] = v; });
+        }
+        tempData.forEach(row => {
+            const raw = row['detail.wlasciciel.nip'] || row['NIP'] || '';
+            const nip = raw.split('.')[0].replace(/\D/g, '').padStart(10, '0');
+            row.VER = verification[nip] || null;
+        });
+
         allData = tempData;
         filteredData = [...allData];
         
@@ -275,6 +289,18 @@ function populateFilters() {
     // Statuses are hardcoded in HTML, so we don't need to auto-populate them.
 }
 
+const VER_BADGES = {
+    CZYNNY: ['badge-active', 'Czynny'],
+    ZWOLNIONY: ['badge-suspended', 'Zwolniony'],
+    NIEZAREJESTROWANY: ['badge-liquidation', 'Niezarejestr.'],
+    WYKRESLONY: ['badge-deleted', 'Wykreślony'],
+    BRAK: ['badge-suspended', 'Brak w rejestrze']
+};
+
+function verificationOf(row) {
+    return row.VER ? row.VER.verification : '';
+}
+
 function applyFilters() {
     const wFilter = wojewodztwoFilter.value.toLowerCase();
     const sFilter = statusFilter.value.toLowerCase();
@@ -282,6 +308,7 @@ function applyFilters() {
     const kFilter = kodFilter.value.toLowerCase();
     const term = searchFilter.value.toLowerCase();
     const cFilter = contactedFilter.value;
+    const vFilter = vatFilter.value;
     const rFilter = currentRejestrTab;
     const pkdVal = pkdFilter.value.toLowerCase();
     const hideNan = hideNanRegion.checked;
@@ -311,8 +338,9 @@ function applyFilters() {
         
         const isContacted = !!contactedFirms[ceidgId];
         const matchContacted = cFilter === 'ALL' || (cFilter === 'YES' && isContacted) || (cFilter === 'NO' && !isContacted);
+        const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
         
-        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchYear;
+        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchYear && matchVat;
     });
     
     currentPage = 1;
@@ -398,6 +426,9 @@ function renderTable() {
             pkdLabel += '<br><small style="color: #15803d; font-weight: 600;">(Główne)</small>';
         }
         
+        const ver = verificationOf(row);
+        const verBadge = ver ? `<span class="badge ${VER_BADGES[ver][0]}">${VER_BADGES[ver][1]}</span>` : '-';
+
         tr.innerHTML = `
             <td style="text-align: center;"><input type="checkbox" class="contact-checkbox" data-id="${ceidgId}" ${isContacted ? 'checked' : ''} title="Oznacz jako skontaktowane"></td>
             <td class="col-nazwa"><strong>${nazwa}</strong></td>
@@ -412,6 +443,7 @@ function renderTable() {
             <td>${telefon}</td>
             <td>${www}</td>
             <td><span class="badge ${statusBadgeClass}">${status}</span></td>
+            <td>${verBadge}</td>
             <td>${dataRozp}</td>
         `;
 
@@ -601,6 +633,8 @@ function openCompanyModal(row) {
             </div>
         </div>
 
+        ${verificationSectionHtml(row)}
+
         <!-- Działalność gospodarcza (PKD) -->
         <div class="modal-section">
             <div class="modal-section-title">🪵 Działalność Tartaczna i Kody PKD</div>
@@ -740,6 +774,7 @@ function renderCharts() {
     const kFilter = kodFilter.value.toLowerCase();
     const term = searchFilter.value.toLowerCase();
     const cFilter = contactedFilter.value;
+    const vFilter = vatFilter.value;
     const rFilter = currentRejestrTab;
     const pkdVal = pkdFilter.value.toLowerCase();
     const hideNan = hideNanRegion.checked;
@@ -766,8 +801,9 @@ function renderCharts() {
         const matchRejestr = rFilter === 'ALL' || rejestr === rFilter;
         const isContacted = !!contactedFirms[ceidgId];
         const matchContacted = cFilter === 'ALL' || (cFilter === 'YES' && isContacted) || (cFilter === 'NO' && !isContacted);
+        const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
         
-        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr) {
+        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchVat) {
             const y = extractYear(row['detail.dataRozpoczecia']);
             if (y) {
                 yearCounts[y] = (yearCounts[y] || 0) + 1;
@@ -925,3 +961,32 @@ function getTitleText(d, regionCounts) {
     return `${d.properties.name}: ${count} firm`;
 }
 
+
+
+function verificationSectionHtml(row) {
+    const v = row.VER;
+    if (!v) return '';
+    const item = (label, value) => value ? `
+                <div class="modal-detail-item">
+                    <span class="detail-label">${label}</span>
+                    <span class="detail-value">${value}</span>
+                </div>` : '';
+    const [badgeClass, badgeText] = VER_BADGES[v.verification];
+    return `
+        <div class="modal-section">
+            <div class="modal-section-title">✅ Weryfikacja (Biała Lista VAT, ${v.checked_on})</div>
+            <div class="modal-grid-2">
+                ${item('Wynik', `<span class="badge ${badgeClass}">${badgeText}</span>${v.possibly_closed ? ' możliwe zamknięcie działalności' : ''}`)}
+                ${item('Status VAT', v.vat_status)}
+                ${item('Adres w rejestrze VAT', v.working_address || v.residence_address)}
+                ${item('Data rejestracji VAT', v.registration_date)}
+                ${item('Data wykreślenia z VAT', v.removal_date)}
+                ${item('Podstawa wykreślenia', v.removal_basis)}
+                ${item('Data przywrócenia', v.restoration_date)}
+                ${item('Reprezentanci', v.representatives)}
+                ${item('Wspólnicy', v.partners)}
+                ${item('Prokurenci', v.authorized_clerks)}
+            </div>
+        </div>
+    `;
+}

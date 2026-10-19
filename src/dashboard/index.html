@@ -14,7 +14,6 @@
         <!-- Top Header -->
         <header class="top-header">
             <div class="logo" style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 32px;">🪵</span>
                 <div>
                     <h2 style="margin: 0;">Firmy<span class="highlight">16.10.Z</span></h2>
                     <p style="margin: 0;">Dane CEIDG i KRS</p>
@@ -124,6 +123,18 @@
                     </div>
 
                     <div class="filter-group">
+                        <label for="vatFilter">Weryfikacja VAT</label>
+                        <select id="vatFilter">
+                            <option value="ALL">Wszystkie</option>
+                            <option value="CZYNNY">Czynny podatnik VAT</option>
+                            <option value="ZWOLNIONY">Zwolniony z VAT</option>
+                            <option value="NIEZAREJESTROWANY">Niezarejestrowany</option>
+                            <option value="WYKRESLONY">Wykreślony (możliwe zamknięcie)</option>
+                            <option value="BRAK">Brak w rejestrze</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
                         <label for="miastoFilter">Miasto</label>
                         <input type="text" id="miastoFilter" placeholder="Wpisz miasto...">
                     </div>
@@ -170,6 +181,7 @@
                                 <th>Telefon</th>
                                 <th>WWW</th>
                                 <th>Status</th>
+                                <th>VAT</th>
                                 <th>Data Rozp.</th>
                             </tr>
                         </thead>
