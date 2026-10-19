@@ -1,4 +1,6 @@
-# Project status — 2026-10-19
+# Project status — 2026-10-19 (end of day)
+
+See also `docs/WORKFLOW.md` for how data flows from fetch to dashboard.
 
 ## TL;DR
 - **Data:** 4,541 CEIDG sole proprietors + 2,479 KRS companies (~7,013 unique NIPs).
@@ -25,9 +27,26 @@ The three generated CSVs are **not committed** (untracked in `data/processed/`).
   `cd data/raw && CEIDG_TOKEN=... ../../venv/bin/python ../../src/ceidg_scraper/fetch_data.py --update`
   (run from `data/raw`; the script writes its files to the current directory, and the resulting CSV must be copied to `data/processed/`).
 
-## Next steps
-1. **Contact details:** use a search API (Serper.dev / SerpAPI, ~$1 per 1,000 searches, ~$5–7 for ~4,600 active firms) by swapping the `search()` function in `web_search.py`; test on ~50 firms first. Alternative: Google Places API (only firms with a listing).
-2. **GUS REGON (BIR1.1) API:** request a key at api.stat.gov.pl (or regon_bir@stat.gov.pl). Gives official address + TERC codes (fixes empty county/municipality), PKD, and phone/email/www where filled. Can be built against the GUS test environment meanwhile.
-3. Re-run CEIDG `--update` with the new token.
-4. Clean up ~600 KRS rows with no main PKD (incl. firms listing every PKD code).
-5. Decide what to do with the 486 "possibly closed" firms (hide by default? separate tab?).
+## Cloudflare Pages
+- Project `sawmills-poland` (https://sawmills-poland.pages.dev) is linked to `OGGEE61/sawmills-poland`, branch `main`. Build command copies `src/dashboard` + `data/processed/*.csv` into `public/`.
+- **Auto-deploy on push is NOT firing** (no build for pushes after Oct 5). A manual build via the Pages API worked (2026-10-19, commit f5cb9c1), so Cloudflare can read the repo; GitHub just isn't notifying it.
+- Fix: GitHub -> Settings -> Applications -> Cloudflare Pages -> Configure -> allow `sawmills-poland`; if that fails, reconnect the Git source in the Cloudflare project. Test by pushing any commit to `main`.
+- Manual deploy meanwhile: `POST /accounts/<id>/pages/projects/sawmills-poland/deployments` with `branch=main` (wrangler login works via `npx wrangler@4.151.1`; wrangler is not installed globally).
+- `verification.csv` is untracked, so the live VAT column/filter is empty.
+
+## What we need to proceed
+**Keys / accounts**
+1. **New CEIDG token** (requested at dane.biznes.gov.pl) -> re-run `fetch_data.py --update`. Old token must be **revoked** (it is in the public repo history).
+2. **GUS REGON key — the "BIR1" API, version 1.1** (SOAP). Request at api.stat.gov.pl ("Zamów klucz do API") or regon_bir@stat.gov.pl. Not the BDL or TERYT APIs. Gives address + TERC (fills county/municipality), PKD, and phone/email/www where filled.
+3. **Search API key** (Serper.dev preferred, or SerpAPI; ~$1 per 1,000 searches, ~$5-7 for ~4,600 active firms) -> contact details via `src/enrichment/web_search.py` (swap `search()`; test on ~50 firms first). Free Selenium scraping of DuckDuckGo/Bing gets blocked.
+
+**Decisions**
+- `verification.csv` / `master.csv` / `enrichment_bialalista.csv` are uncommitted: they contain board-member names and the repo is public. Commit as is, strip the names, or keep local.
+- What the dashboard does with the 486 "possibly closed" (WYKRESLONY) firms: hide by default or separate tab.
+
+**Can be done without waiting**
+- Build the GUS REGON client against GUS's public test environment.
+- Clean up ~600 KRS rows with no main PKD (incl. firms listing every PKD code).
+- Fix GitHub -> Cloudflare auto-deploy (see above).
+
+**Suggested order:** request GUS key + sign up for Serper -> GUS test-env code + PKD cleanup -> when keys arrive: CEIDG update, contact search, GUS enrichment.
