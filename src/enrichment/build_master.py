@@ -3,7 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 
-PROCESSED = Path(__file__).resolve().parents[2] / "data" / "processed"
+from contacts import read_ceidg
+
+PROCESSED =Path(__file__).resolve().parents[2] / "data" / "processed"
 
 
 def clean_nip(value):
@@ -15,7 +17,7 @@ def clean_nip(value):
 
 def main():
     krs = pd.read_csv(PROCESSED / "tartaki_full.csv", dtype=str)
-    ceidg = pd.read_csv(PROCESSED / "tartaki_ceidg.csv", sep=";", encoding="utf-8-sig", dtype=str)
+    ceidg = read_ceidg()
 
     krs_m = pd.DataFrame({
         "source": "KRS",

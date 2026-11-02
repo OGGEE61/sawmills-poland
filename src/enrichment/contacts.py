@@ -80,12 +80,19 @@ def pair_fits(mask, first, last):
     return len(parts) >= 2 and word_fits(parts[0], first) and word_fits(parts[-1], last)
 
 
+def read_ceidg():
+    """Sawmill sole traders, plus other wood trades once fetch_data.py --wood has been run."""
+    frames = [pd.read_csv(PROCESSED / name, sep=";", encoding="utf-8-sig", dtype=str)
+              for name in ("tartaki_ceidg.csv", "tartaki_ceidg_wood.csv") if (PROCESSED / name).exists()]
+    return pd.concat(frames, ignore_index=True)
+
+
 def registry_contacts():
     """One row per firm with what the registers themselves say: nip, phone, email, site, site_source."""
     master = pd.read_csv(PROCESSED / "master.csv", dtype=str).dropna(subset=["nip"]).drop_duplicates("nip")
     master["key"] = master["source_id"].where(master["source"] == "CEIDG", master["source_id"].str.zfill(10))
 
-    ceidg = pd.read_csv(PROCESSED / "tartaki_ceidg.csv", sep=";", encoding="utf-8-sig", dtype=str)
+    ceidg = read_ceidg()
     ceidg = pd.DataFrame({"key": ceidg["CEIDG_ID"], "raw_phone": ceidg["detail.telefon"], "raw_email": ceidg["detail.email"],
                           "raw_site": ceidg["detail.www"]})
     krs = pd.read_csv(PROCESSED / "krs_signals.csv", dtype=str)

@@ -18,7 +18,7 @@ from datetime import date
 import pandas as pd
 
 from crawl_websites import PARKED_RE, PLACEHOLDER_MAIL_RE
-from contacts import PROCESSED, clean_email, clean_phone, email_domain, mask_fits, missing, pair_fits, plain, registry_contacts
+from contacts import PROCESSED, clean_email, clean_phone, email_domain, mask_fits, missing, pair_fits, plain, read_ceidg, registry_contacts
 
 TODAY = date.today()
 WEIGHTS = {"fit": 0.45, "capacity": 0.30, "timing": 0.25}
@@ -446,7 +446,7 @@ def build_rows():
     krs_full["krs"] = krs_full["krs"].str.zfill(10)
     krs_full = krs_full.drop_duplicates("krs").set_index("krs").to_dict("index")
     signals = pd.read_csv(PROCESSED / "krs_signals.csv", dtype=str).fillna("").set_index("krs").to_dict("index")
-    ceidg = pd.read_csv(PROCESSED / "tartaki_ceidg.csv", sep=";", encoding="utf-8-sig", dtype=str).fillna("")
+    ceidg = read_ceidg().fillna("")
     ceidg = ceidg.drop_duplicates("CEIDG_ID").set_index("CEIDG_ID").to_dict("index")
     eu = load_eu()
     sites = load_sites()

@@ -26,6 +26,11 @@ MAIN_PKD_CODES = {
     "16.11.Z",
 }
 
+# --wood: other trades with wood waste, same codes as enrichment/expand_market.py.
+# Sawmills stay in tartaki_ceidg.csv, so 16.10/16.11 are left out here.
+WOOD_SEARCH_PKD_CODES = ["1624Z", "1623Z", "1622Z", "1621Z", "1629Z", "0220Z", "0240Z", "3109Z", "3102Z", "3101Z", "8130Z"]
+WOOD_MAIN_PREFIXES = ("16", "310", "0220", "0240", "8130")
+
 STATUS = "AKTYWNY"
 
 REQUEST_INTERVAL = 3.7
@@ -37,6 +42,7 @@ BATCH_SIZE = 25
 MAX_RETRIES_5XX = 5
 
 OUTPUT_CSV = "tartaki_ceidg.csv"
+OUTPUT_JSONL = "tartaki_ceidg.jsonl"
 STATE_FILE = "ceidg_state.json"
 
 SAVE_RAW_JSON = True
@@ -387,11 +393,11 @@ def append_records_to_csv(records):
         "WWW",
     ]
 
-    with open("tartaki_ceidg.jsonl", "a", encoding="utf-8") as f:
+    with open(OUTPUT_JSONL, "a", encoding="utf-8") as f:
         for row in records:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    combined_df = pd.read_json("tartaki_ceidg.jsonl", lines=True, dtype=str)
+    combined_df = pd.read_json(OUTPUT_JSONL, lines=True, dtype=str)
 
     remaining = [
         c for c in combined_df.columns
@@ -449,16 +455,47 @@ def load_processed_ids_from_csv():
 
 
 
+def is_wood_main_pkd(code):
+    """
+    Główny PKD z branży drzewnej poza tartakami, w formacie 1624Z lub 16.24.Z.
+    """
+    plain_code = code.replace(".", "").upper()
+    return (
+        plain_code.startswith(WOOD_MAIN_PREFIXES)
+        and code not in MAIN_PKD_CODES
+    )
+
+
+def use_wood_files():
+    """
+    --wood ma osobny stan: firmy odrzucone wcześniej jako "nie tartak"
+    są zapisane w ceidg_state.json i inaczej zostałyby tu pominięte.
+    """
+    global OUTPUT_CSV, OUTPUT_JSONL, STATE_FILE, RAW_JSON_FILE
+
+    OUTPUT_CSV = "tartaki_ceidg_wood.csv"
+    OUTPUT_JSONL = "tartaki_ceidg_wood.jsonl"
+    STATE_FILE = "ceidg_wood_state.json"
+    RAW_JSON_FILE = "tartaki_ceidg_wood_raw.jsonl"
+
+
 def main():
     import sys
     update_mode = "--update" in sys.argv
+    wood_mode = "--wood" in sys.argv
     ensure_token()
 
+    if wood_mode:
+        use_wood_files()
+
+    search_codes = WOOD_SEARCH_PKD_CODES if wood_mode else SEARCH_PKD_CODES
+    accepts = is_wood_main_pkd if wood_mode else MAIN_PKD_CODES.__contains__
+
     print("=" * 70)
-    print("CEIDG v3 - wyszukiwanie aktywnych tartaków")
+    print("CEIDG v3 - wyszukiwanie aktywnych firm drzewnych" if wood_mode else "CEIDG v3 - wyszukiwanie aktywnych tartaków")
     print("=" * 70)
-    print(f"PKD wyszukiwane: {', '.join(SEARCH_PKD_CODES)}")
-    print(f"PKD główne akceptowane: {', '.join(sorted(MAIN_PKD_CODES))}")
+    print(f"PKD wyszukiwane: {', '.join(search_codes)}")
+    print(f"PKD główne akceptowane: {', '.join(WOOD_MAIN_PREFIXES) if wood_mode else ', '.join(sorted(MAIN_PKD_CODES))}")
     print(f"Batch szczegółów: {BATCH_SIZE} firm")
     print(f"Odstęp między requestami: {REQUEST_INTERVAL} s")
     print(f"CSV: {OUTPUT_CSV}")
@@ -483,7 +520,7 @@ def main():
     total_saved = 0
 
     try:
-        for pkd_code in SEARCH_PKD_CODES:
+        for pkd_code in search_codes:
 
             page_key = str(pkd_code)
             page = int(
@@ -634,7 +671,7 @@ def main():
                         detail
                     )
 
-                    if main_pkd in MAIN_PKD_CODES:
+                    if accepts(main_pkd):
 
                         record = build_output_record(
                             summary,

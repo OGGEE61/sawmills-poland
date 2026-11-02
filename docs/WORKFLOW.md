@@ -56,6 +56,8 @@ All commands run from the repo root with `venv/bin/python` (except the CEIDG fet
 
 `--update` re-walks all pages and only adds firms that are new.
 
+To add other wood trades (the codes `expand_market.py` covers for companies), run the same command with `--wood` instead of `--update`. It writes `tartaki_ceidg_wood.csv` with its own resume file. Copy that CSV to `data/processed/`, then run `refresh.sh`. It holds names and contacts, so it is git-ignored. Tested on a stub only. It searches 11 codes, and the time depends on how many firms they hold.
+
 ## Step 1b: KRS (companies)
 
 | Stage | Script | Reads | Writes |
