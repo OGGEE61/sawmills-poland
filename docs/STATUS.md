@@ -23,7 +23,7 @@
 - Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
 - GUS: tested on its test server only, which anonymises sole traders. Places: tested on a stub only. SearchApi.io and Serper: tested live.
 
-**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (CEIDG support is checking bulk access); GUS key (requested 2026-11-02); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (call +48 222 500 123 to get it; CEIDG support is checking bulk access); GUS key (requested 2026-11-02); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
 
 **Next**
 1. For now the tool is for the user only, so the full list stays local. The public site has registry data only.

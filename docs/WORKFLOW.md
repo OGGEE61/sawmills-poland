@@ -47,7 +47,7 @@ All commands run from the repo root with `venv/bin/python` (except the CEIDG fet
 | | |
 |---|---|
 | Script | `src/ceidg_scraper/fetch_data.py` |
-| Needs | `export CEIDG_TOKEN="..."` (a new key is requested; the old one must be revoked) |
+| Needs | `export CEIDG_TOKEN="..."` (for a new key call +48 222 500 123; the old one must be revoked) |
 | Run | `cd data/raw && ../../venv/bin/python ../../src/ceidg_scraper/fetch_data.py --update` |
 | Why `cd data/raw` | the script writes its files into the current folder, and its resume file `ceidg_state.json` lives there |
 | Output | `data/raw/tartaki_ceidg.csv` (also `.jsonl`) |
