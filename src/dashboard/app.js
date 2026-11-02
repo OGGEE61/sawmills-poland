@@ -246,13 +246,20 @@ function updateTabStyles() {
     });
 }
 
+// The host answers a missing file with its HTML page and status 200
+function fetchCsv(path) {
+    return fetch(path)
+        .then(res => res.ok && !(res.headers.get('content-type') || '').includes('html') ? res.text() : null)
+        .catch(() => null);
+}
+
 // Load CSV Data
 function loadData() {
     Promise.all([
-        fetch('../../data/processed/tartaki_ceidg.csv').then(res => res.ok ? res.text() : null).catch(() => null),
-        fetch('../../data/processed/tartaki_full.csv').then(res => res.ok ? res.text() : null).catch(() => null),
-        fetch('../../data/processed/verification.csv').then(res => res.ok ? res.text() : null).catch(() => null),
-        fetch('../../data/processed/leads.csv').then(res => res.ok ? res.text() : null).catch(() => null)
+        fetchCsv('../../data/processed/tartaki_ceidg.csv'),
+        fetchCsv('../../data/processed/tartaki_full.csv'),
+        fetchCsv('../../data/processed/verification.csv'),
+        fetchCsv('../../data/processed/leads.csv')
     ]).then(([ceidgText, krsText, verifText, leadsText]) => {
         let tempData = [];
         

@@ -344,7 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.top !== window) document.getElementById('backLink').hidden = true; // shown as a tab of the main dashboard
 
     fetch('../../data/processed/leads.csv')
-        .then(res => { if (!res.ok) throw new Error(res.status); return res.text(); })
+        // the host answers a missing file with its HTML page and status 200
+        .then(res => { if (!res.ok || (res.headers.get('content-type') || '').includes('html')) throw new Error(res.status); return res.text(); })
         .then(init)
         .catch(() => {
             document.getElementById('dataNote').textContent = 'Brak pliku leads.csv. Lista zawiera dane osobowe, więc nie ma jej w repozytorium: uruchom lokalnie src/enrichment/build_leads.py.';
