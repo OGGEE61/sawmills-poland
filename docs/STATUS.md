@@ -2,16 +2,16 @@
 
 **Goal:** sell wood chippers and briquette machines to Polish firms with wood waste. Run and refresh: `docs/WORKFLOW.md`, Step 4. Nothing below the line has been re-checked since 2026-10-19.
 
-| Live firms (6,370) | Phone | Email | Website | Full contact name | Role only |
+| Live firms (7,577) | Phone | Email | Website | Full contact name | Role only |
 |---|---|---|---|---|---|
-| KRS (1,873) | 141 | 333 | 200 | 117 | ~1,700 |
-| CEIDG (4,497) | 945 | 909 | 194 | 4,497 | - |
+| KRS (3,080) | 308 | 655 | 420 | 242 | 2,786 |
+| CEIDG (4,497) | 1,019 | 963 | 231 | 4,497 | - |
 
-- Target: 0.5-2 t/h machines, Weima sub-brand for small clients, but still big machines: micro firms are not the target (user, 2026-11-02). 160 big firms and 149 very small ones are kept out of tiers A and B. **Scoring does not reflect this yet: 843 of the 934 A+B firms are sole traders.** The minimum client size is to be agreed.
-- Tiers: A 68, B 866, C 3445, D 1991, X 664 (closing or closed). Of A+B: 429 have a phone, 85 email only, 420 need research.
-- Search API: 1,054 firms searched, 99 with SearchApi.io and 955 with Serper (A, then all of B, then 193 of C). In the 552 B firms that had no contact, 166 now have a phone. 154 live phones come from search snippets, so check them on the first call. Serper has 1,544 free queries left, kept for strong firms only; tier C search stopped on purpose.
+- Target: 0.5-2 t/h machines, Weima sub-brand for small clients, but still big machines: micro firms are not the target (user, 2026-11-02). Big firms and very small ones are kept out of tiers A and B. A sole trader needs its own website, an EU project or a second address to count as the right size; the second address is a weak sign.
+- Tiers: A 76, B 488, C 1994, D 5019, X 999 (closing or closed). Of A+B (418 sole traders, 146 companies): 346 have a phone, 53 email only, 165 need research.
+- Search API: 1,566 firms searched, 99 with SearchApi.io and 1,467 with Serper. The last batch of 512 (A, B, then the best of C) went from 0 to 177 phones. 215 live phones come from search snippets, so check them on the first call. Serper has 1,032 free queries left. Sole traders without another sign of scale are no longer searched, so a website could raise only those already searched.
 - EU projects, right-sized firms: 25 have a recent waste/biomass/GOZ project, 11 a recent machinery project.
-- Wider market: verification in progress, 13,000 of 15,317 candidates read and 1,456 kept (11%), not yet in the list. Companies only; merge once the minimum size is agreed. No further PKD codes for now.
+- Wider market: finished. 15,317 candidates read, 1,564 companies kept and merged; 1,542 were new to the list. No further PKD codes for now.
 
 **Known limits**
 - Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
@@ -26,9 +26,9 @@
 **Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (CEIDG support is checking bulk access); GUS key (requested 2026-11-02); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
 
 **Next**
-1. Calls are on hold for now. When they start, begin with the "Zmiany" list and note which firms have wood waste and buy: scoring has no sales data yet.
-2. Agree the minimum client size, then re-rank so small sole traders stop filling A and B.
-3. When `expand_market.py verify` finishes, run `refresh.sh` to add those firms to the list.
+1. Decide where the team uses the tool. The public site has registry data only; the full list needs a site behind login (Cloudflare Access) or stays local.
+2. Check the top of the list with sales and adjust the size rule, starting with the second-address sign. Scoring has no sales data yet.
+3. Spend the remaining Serper queries only on strong companies, if contacts run short.
 4. Use Google Places (billed) only if search leaves too many strong firms without a phone.
 5. When GUS and CEIDG keys arrive, run GUS first. Do not run `fetch_data.py --wood` by default: it adds thousands of small sole traders.
 
