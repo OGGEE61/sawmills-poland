@@ -50,6 +50,27 @@ function contactOf(row, leadField, rawField) {
     return row[rawField] && row[rawField] !== 'nan' ? row[rawField] : '-';
 }
 
+function matchesContactData(row, value) {
+    const phone = contactOf(row, 'phone', 'TELEFON') !== '-';
+    const email = contactOf(row, 'email', 'EMAIL') !== '-';
+    switch (value) {
+        case 'PHONE': return phone;
+        case 'EMAIL': return email;
+        case 'PHONE_OR_EMAIL': return phone || email;
+        case 'PHONE_AND_EMAIL': return phone && email;
+        case 'WWW': return contactOf(row, 'website', 'WWW') !== '-';
+        case 'NONE': return !phone && !email;
+        default: return true;
+    }
+}
+
+function siteLinkHtml(www) {
+    if (www === '-') return '-';
+    const url = /^https?:\/\//i.test(www) ? www : `https://${www}`;
+    const label = www.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+    return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">${esc(label)}</a>`;
+}
+
 function personHtml(lead) {
     if (!lead) return '-';
     if (lead.contact_person) return `<strong>${esc(lead.contact_person)}</strong><br><small style="color: var(--text-muted);">${esc(lead.contact_role)}</small>`;
@@ -70,6 +91,7 @@ const kodFilter = document.getElementById('kodFilter');
 const searchFilter = document.getElementById('searchFilter');
 const contactedFilter = document.getElementById('contactedFilter');
 const vatFilter = document.getElementById('vatFilter');
+const contactDataFilter = document.getElementById('contactDataFilter');
 const tierFilter = document.getElementById('tierFilter');
 const actionFilter = document.getElementById('actionFilter');
 const productFilter = document.getElementById('productFilter');
@@ -130,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hideNanRegion.addEventListener('change', applyFilters);
     contactedFilter.addEventListener('change', applyFilters);
     vatFilter.addEventListener('change', applyFilters);
+    contactDataFilter.addEventListener('change', applyFilters);
     tierFilter.addEventListener('change', applyFilters);
     actionFilter.addEventListener('change', applyFilters);
     productFilter.addEventListener('change', applyFilters);
@@ -169,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchFilter.value = '';
         contactedFilter.value = 'ALL';
         vatFilter.value = 'ALL';
+        contactDataFilter.value = '';
         tierFilter.value = '';
         actionFilter.value = '';
         productFilter.value = '';
@@ -429,7 +453,7 @@ function applyFilters() {
         const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
         const matchLead = matchesTier(row, tierVal) && (!actionVal || (row.LEAD && row.LEAD.action === actionVal)) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
         
-        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchYear && matchVat && matchLead;
+        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchYear && matchVat && matchLead && matchesContactData(row, contactDataFilter.value);
     });
     filteredData.sort((a, b) => (b.LEAD ? Number(b.LEAD.priority) : -1) - (a.LEAD ? Number(a.LEAD.priority) : -1));
     
@@ -483,65 +507,28 @@ function renderTable() {
         // Extract values handling potential missing keys
         const nazwa = row['NAZWA'] || '-';
         const nip = row['detail.wlasciciel.nip'] || row['summary.wlasciciel.nip'] || row['NIP'] || row['nip'] || '-';
-        const regon = row['detail.wlasciciel.regon'] || row['summary.wlasciciel.regon'] || row['REGON'] || row['regon'] || '-';
-        const pkd = row['PKD_GLOWNE_KOD'] || row['pkd_main'] || '-';
-        const woj = row['detail.adresDzialalnosci.wojewodztwo'] || row['voivodeship'] || '-';
-        const miasto = row['detail.adresDzialalnosci.miasto'] || row['city'] || '-';
-        const ulica = (row['detail.adresDzialalnosci.ulica'] && row['detail.adresDzialalnosci.ulica'] !== 'nan') ? row['detail.adresDzialalnosci.ulica'] : (row['street'] || '');
-        const budynek = (row['detail.adresDzialalnosci.budynek'] && row['detail.adresDzialalnosci.budynek'] !== 'nan') ? row['detail.adresDzialalnosci.budynek'] : (row['building_no'] || '');
-        const lokal = (row['detail.adresDzialalnosci.lokal'] && row['detail.adresDzialalnosci.lokal'] !== 'nan') ? row['detail.adresDzialalnosci.lokal'] : (row['unit_no'] || '');
-        const kod = row['detail.adresDzialalnosci.kod'] || row['postal_code'] || '-';
+        const woj = row['detail.adresDzialalnosci.wojewodztwo'] || row['voivodeship'] || '';
+        const miasto = row['detail.adresDzialalnosci.miasto'] || row['city'] || '';
+        const miejsce = [miasto, woj].filter(part => part && part !== 'nan').join(', ').toLowerCase();
         const email = contactOf(row, 'email', 'EMAIL');
         const telefon = contactOf(row, 'phone', 'TELEFON');
         const www = contactOf(row, 'website', 'WWW');
         const status = row['STATUS'] || '-';
-        const dataRozp = row['detail.dataRozpoczecia'] || row['registration_date'] || '-';
 
-        let fullAdres = miasto;
-        let ulicaPart = '';
-        if (ulica) ulicaPart += ulica + ' ';
-        if (budynek) ulicaPart += budynek;
-        if (lokal) ulicaPart += '/' + lokal;
-        
-        if(ulicaPart.trim()) {
-            fullAdres += `<br><span style="font-size: 0.85em; color: var(--text-muted);">${ulicaPart.trim()}</span>`;
-        }
-        
         const ceidgId = row['CEIDG_ID'] || row['id'] || nip;
         const isContacted = isContactedRow(row, ceidgId);
-        const rejestr = (row['REJESTR'] || 'CEIDG').toUpperCase();
-        const rejestrBadgeClass = rejestr === 'KRS' ? 'badge-rejestr-krs' : 'badge-rejestr-ceidg';
-        const statusBadgeClass = status === 'AKTYWNY' ? 'badge-active' : (status === 'W LIKWIDACJI' ? 'badge-liquidation' : (status === 'ZAWIESZONY' ? 'badge-suspended' : 'badge-deleted'));
-        
-        let pkdLabel = pkd;
-        if (rejestr === 'KRS' && row['PKD_MATCH_TYPE'] && row['PKD_MATCH_TYPE'].includes('pozostałe')) {
-            pkdLabel += '<br><small style="color: #c2410c; font-weight: 600;">(Poboczne)</small>';
-        } else if (rejestr === 'KRS' && row['PKD_MATCH_TYPE'] && row['PKD_MATCH_TYPE'].includes('przeważające')) {
-            pkdLabel += '<br><small style="color: #15803d; font-weight: 600;">(Główne)</small>';
-        }
-        
-        const ver = verificationOf(row);
-        const verBadge = ver ? `<span class="badge ${VER_BADGES[ver][0]}">${VER_BADGES[ver][1]}</span>` : '-';
+        const statusBadgeClass = status === 'W LIKWIDACJI' ? 'badge-liquidation' : (status === 'ZAWIESZONY' ? 'badge-suspended' : 'badge-deleted');
+        // only an exception is worth space in the row: the full status is on the card
+        const statusNote = status === 'AKTYWNY' ? '' : ` <span class="badge ${statusBadgeClass}">${esc(status)}</span>`;
 
         tr.innerHTML = `
             <td style="text-align: center;"><input type="checkbox" class="contact-checkbox" data-id="${ceidgId}" data-nip="${esc(row.LEAD ? row.LEAD.nip : '')}" ${isContacted ? 'checked' : ''} title="Oznacz jako skontaktowane"></td>
             <td>${row.LEAD ? `<div class="score"><span class="tier tier-${esc(row.LEAD.tier)}">${esc(row.LEAD.tier)}</span><b>${esc(row.LEAD.priority)}</b></div>` : '-'}</td>
-            <td class="col-nazwa"><strong>${nazwa}</strong></td>
-            <td>${row.LEAD ? esc(row.LEAD.product) || '-' : '-'}</td>
+            <td class="col-nazwa"><strong>${esc(nazwa)}</strong>${statusNote}${miejsce ? `<br><small style="color: var(--text-muted); text-transform: capitalize;">${esc(miejsce)}</small>` : ''}</td>
             <td>${personHtml(row.LEAD)}</td>
-            <td>${nip}</td>
-            <td>${regon}</td>
-            <td>${pkdLabel}</td>
-            <td><span class="badge ${rejestrBadgeClass}">${rejestr}</span></td>
-            <td>${woj}</td>
-            <td>${fullAdres}</td>
-            <td>${kod}</td>
-            <td>${esc(email)}</td>
             <td>${telefon !== '-' ? `<a class="phone" href="tel:${esc(telefon.replace(/\s/g, ''))}">${esc(telefon)}</a>` : '-'}</td>
-            <td>${esc(www)}</td>
-            <td><span class="badge ${statusBadgeClass}">${status}</span></td>
-            <td>${verBadge}</td>
-            <td>${dataRozp}</td>
+            <td>${email !== '-' ? `<a href="mailto:${esc(email)}" style="color: var(--accent);">${esc(email)}</a>` : '-'}</td>
+            <td>${siteLinkHtml(www)}</td>
         `;
 
         // Click row to open modal
@@ -902,7 +889,7 @@ function renderCharts() {
         const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
         const matchLead = matchesTier(row, tierVal) && (!actionVal || (row.LEAD && row.LEAD.action === actionVal)) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
         
-        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchVat && matchLead) {
+        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchVat && matchLead && matchesContactData(row, contactDataFilter.value)) {
             const y = extractYear(row['detail.dataRozpoczecia']);
             if (y) {
                 yearCounts[y] = (yearCounts[y] || 0) + 1;

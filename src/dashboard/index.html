@@ -161,7 +161,20 @@
                     </div>
 
                     <div class="filter-group">
-                        <label for="contactedFilter">Kontakt</label>
+                        <label for="contactDataFilter">Dane kontaktowe</label>
+                        <select id="contactDataFilter">
+                            <option value="">Wszystkie</option>
+                            <option value="PHONE">Ma telefon</option>
+                            <option value="EMAIL">Ma e-mail</option>
+                            <option value="PHONE_OR_EMAIL">Ma telefon lub e-mail</option>
+                            <option value="PHONE_AND_EMAIL">Ma telefon i e-mail</option>
+                            <option value="WWW">Ma stronę WWW</option>
+                            <option value="NONE">Brak telefonu i e-maila</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="contactedFilter">Czy skontaktowano</label>
                         <select id="contactedFilter">
                             <option value="ALL">Wszystkie</option>
                             <option value="YES">Skontaktowane</option>
@@ -208,31 +221,20 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
                     <div>
                         <h3 style="margin-bottom: 2px;">Lista firm</h3>
-                        <p style="font-size: 13px; color: var(--text-muted);">💡 Kliknij wiersz firmy, aby wyświetlić pełną kartę ze wszystkimi danymi (kapitał, PKD, adres).</p>
+                        <p style="font-size: 13px; color: var(--text-muted);">💡 Kliknij wiersz firmy, aby wyświetlić pełną kartę: oferta, NIP, REGON, PKD, adres, VAT, kapitał.</p>
                     </div>
                 </div>
                 <div class="table-container">
                     <table id="dataTable">
                         <thead>
                             <tr>
-                                <th style="text-align: center; width: 60px;">Kontakt</th>
+                                <th style="text-align: center; width: 60px;" title="Oznacz jako skontaktowane">Kontakt</th>
                                 <th>Priorytet</th>
-                                <th>Nazwa</th>
-                                <th>Oferta</th>
+                                <th>Firma</th>
                                 <th>Do kogo</th>
-                                <th>NIP</th>
-                                <th>Regon</th>
-                                <th>PKD Główne</th>
-                                <th>Rejestr</th>
-                                <th>Województwo</th>
-                                <th>Adres (Miasto, Ulica)</th>
-                                <th>Kod Poczt.</th>
-                                <th>Email</th>
                                 <th>Telefon</th>
+                                <th>Email</th>
                                 <th>WWW</th>
-                                <th>Status</th>
-                                <th>VAT</th>
-                                <th>Data Rozp.</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">

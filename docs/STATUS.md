@@ -4,14 +4,14 @@
 
 | Live firms (6,370) | Phone | Email | Website | Full contact name | Role only |
 |---|---|---|---|---|---|
-| KRS (1,873) | 90 | 290 | 152 | 117 | ~1,700 |
-| CEIDG (4,497) | 752 | 792 | 103 | 4,497 | - |
+| KRS (1,873) | 141 | 333 | 200 | 117 | ~1,700 |
+| CEIDG (4,497) | 945 | 909 | 194 | 4,497 | - |
 
-- Target: 0.5-2 t/h machines, Weima sub-brand for the smallest clients. 160 big firms and 149 very small ones are kept out of tiers A and B.
-- Tiers: A 59, B 854, C 3466, D 1991, X 664 (closing or closed). Of A+B: 214 have a phone, 88 email only, 611 need research.
-- Search API: 99 firms searched with SearchApi.io (A first, then B firms with no contact). Tier A top 50 went from 2 to 18 phones; the 49 B firms from 0 to 13. 20 phones come from search snippets, so check them on the first call. SearchApi credits are used up; 552 tier B firms with no contact have not been searched.
+- Target: 0.5-2 t/h machines, Weima sub-brand for small clients, but still big machines: micro firms are not the target (user, 2026-11-02). 160 big firms and 149 very small ones are kept out of tiers A and B. **Scoring does not reflect this yet: 843 of the 934 A+B firms are sole traders.** The minimum client size is to be agreed.
+- Tiers: A 68, B 866, C 3445, D 1991, X 664 (closing or closed). Of A+B: 429 have a phone, 85 email only, 420 need research.
+- Search API: 1,054 firms searched, 99 with SearchApi.io and 955 with Serper (A, then all of B, then 193 of C). In the 552 B firms that had no contact, 166 now have a phone. 154 live phones come from search snippets, so check them on the first call. Serper has 1,544 free queries left, kept for strong firms only; tier C search stopped on purpose.
 - EU projects, right-sized firms: 25 have a recent waste/biomass/GOZ project, 11 a recent machinery project.
-- Wider market: verification in progress, 9,200 of 15,317 candidates read and 1,202 kept (13%), not yet in the list. `expand_market.py verify` is resumable.
+- Wider market: verification in progress, 13,000 of 15,317 candidates read and 1,456 kept (11%), not yet in the list. Companies only; merge once the minimum size is agreed. No further PKD codes for now.
 
 **Known limits**
 - Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
@@ -27,10 +27,10 @@
 
 **Next**
 1. Calls are on hold for now. When they start, begin with the "Zmiany" list and note which firms have wood waste and buy: scoring has no sales data yet.
-2. Finish the Serper search of the 552 tier B firms with no contact: see `docs/WORKFLOW.md`.
+2. Agree the minimum client size, then re-rank so small sole traders stop filling A and B.
 3. When `expand_market.py verify` finishes, run `refresh.sh` to add those firms to the list.
 4. Use Google Places (billed) only if search leaves too many strong firms without a phone.
-5. When GUS and CEIDG keys arrive, run them. Both are free and cover firms that search misses.
+5. When GUS and CEIDG keys arrive, run GUS first. Do not run `fetch_data.py --wood` by default: it adds thousands of small sole traders.
 
 ---
 
