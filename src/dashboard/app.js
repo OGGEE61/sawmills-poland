@@ -254,6 +254,8 @@ function loadData() {
         fetchCsv('../../data/processed/verification.csv'),
         fetchCsv('../../data/processed/leads.csv')
     ]).then(([ceidgText, krsText, verifText, leadsText]) => {
+        // the public site has no leads.csv: hide what depends on it instead of showing empty columns
+        document.body.classList.toggle('no-leads', !leadsText);
         let tempData = [];
         
         if (ceidgText) {
@@ -422,7 +424,8 @@ function applyFilters() {
     const moreCount = ['miastoFilter', 'kodFilter', 'productFilter'].filter(id => document.getElementById(id).value).length
         + (vatFilter.value !== 'ALL' ? 1 : 0) + (statusFilter.value !== 'ALL' ? 1 : 0) + (hideNanRegion.checked ? 0 : 1);
     document.getElementById('moreFiltersCount').textContent = moreCount ? `(${moreCount})` : '';
-    filteredData.sort((a, b) => (b.LEAD ? Number(b.LEAD.priority) : -1) - (a.LEAD ? Number(a.LEAD.priority) : -1));
+    const reachable = row => (contactOf(row, 'phone', 'TELEFON') !== '-' ? 2 : 0) + (contactOf(row, 'email', 'EMAIL') !== '-' ? 1 : 0);
+    filteredData.sort((a, b) => (b.LEAD ? Number(b.LEAD.priority) : -1) - (a.LEAD ? Number(a.LEAD.priority) : -1) || reachable(b) - reachable(a));
     
     currentPage = 1;
     updateDashboard();
@@ -486,9 +489,9 @@ function renderTable() {
         const statusNote = status === 'AKTYWNY' ? '' : ` <span class="badge ${statusBadgeClass}">${esc(status)}</span>`;
 
         tr.innerHTML = `
-            <td>${fitBadge(row.LEAD)}</td>
+            <td class="needs-leads">${fitBadge(row.LEAD)}</td>
             <td class="col-nazwa"><strong>${esc(nazwa)}</strong>${statusNote}${miejsce ? `<br><small style="color: var(--text-muted); text-transform: capitalize;">${esc(miejsce)}</small>` : ''}</td>
-            <td>${personHtml(row.LEAD)}</td>
+            <td class="needs-leads">${personHtml(row.LEAD)}</td>
             <td>${telefon !== '-' ? `<a class="phone" href="tel:${esc(telefon.replace(/\s/g, ''))}">${esc(telefon)}</a>` : '-'}</td>
             <td>${email !== '-' ? `<a href="mailto:${esc(email)}" style="color: var(--accent);">${esc(email)}</a>` : '-'}</td>
             <td>${siteLinkHtml(www)}</td>

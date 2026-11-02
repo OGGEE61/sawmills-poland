@@ -29,7 +29,7 @@
 
             <div class="tabs-container">
                 <button class="page-tab active" data-page="map">Mapa i rejestry</button>
-                <button class="page-tab" data-page="sales">Lista sprzedażowa</button>
+                <button class="page-tab needs-leads" data-page="sales">Lista sprzedażowa</button>
             </div>
 
             <div class="status-indicator">
@@ -49,11 +49,11 @@
                     <div class="stat-title">Najwięcej firm</div>
                     <div class="stat-value" id="topRegion">-</div>
                 </div>
-                <div class="card stat-card">
+                <div class="card stat-card needs-leads">
                     <div class="stat-title">Bardzo dobre i dobre</div>
                     <div class="stat-value" id="topTierCount">-</div>
                 </div>
-                <div class="card stat-card">
+                <div class="card stat-card needs-leads">
                     <div class="stat-title">W tym z telefonem</div>
                     <div class="stat-value" id="callableCount">-</div>
                 </div>
@@ -98,7 +98,7 @@
                         <input type="text" id="searchFilter" placeholder="Nazwa firmy, NIP...">
                     </div>
 
-                    <div class="filter-group">
+                    <div class="filter-group needs-leads">
                         <label for="tierFilter">Dopasowanie</label>
                         <select id="tierFilter">
                             <option value="">Wszystkie</option>
@@ -207,16 +207,17 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
                     <div>
                         <h3 style="margin-bottom: 2px;">Lista firm</h3>
-                        <p style="font-size: 13px; color: var(--text-muted);">Najlepiej dopasowane na górze. Dopasowanie to nasza ocena: czy firma ma odpad drzewny, właściwą wielkość i świeże sygnały inwestycji. Kliknij wiersz, aby zobaczyć kartę firmy.</p>
+                        <p class="only-public" style="font-size: 13px; color: var(--text-muted);">Wersja publiczna: tylko dane z rejestrów, firmy z telefonem i e-mailem na górze. Kliknij wiersz, aby zobaczyć kartę firmy.</p>
+                        <p class="needs-leads" style="font-size: 13px; color: var(--text-muted);">Najlepiej dopasowane na górze. Dopasowanie to nasza ocena: czy firma ma odpad drzewny, właściwą wielkość i świeże sygnały inwestycji. Kliknij wiersz, aby zobaczyć kartę firmy.</p>
                     </div>
                 </div>
                 <div class="table-container">
                     <table id="dataTable">
                         <thead>
                             <tr>
-                                <th title="Czy firma ma odpad drzewny, właściwą wielkość i świeże sygnały inwestycji">Dopasowanie</th>
+                                <th class="needs-leads" title="Czy firma ma odpad drzewny, właściwą wielkość i świeże sygnały inwestycji">Dopasowanie</th>
                                 <th>Firma</th>
-                                <th>Do kogo</th>
+                                <th class="needs-leads">Do kogo</th>
                                 <th>Telefon</th>
                                 <th>Email</th>
                                 <th>WWW</th>

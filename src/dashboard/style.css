@@ -222,6 +222,19 @@ body {
     min-width: 0;
 }
 
+.no-leads .needs-leads,
+.only-public {
+    display: none !important;
+}
+
+.no-leads .only-public {
+    display: block !important;
+}
+
+.no-leads .filters-main {
+    grid-template-columns: 2fr repeat(3, minmax(150px, 1fr));
+}
+
 .filters-more {
     margin-top: 12px;
 }
@@ -243,7 +256,8 @@ body {
 }
 
 @media (max-width: 1000px) {
-    .filters-main {
+    .filters-main,
+    .no-leads .filters-main {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
