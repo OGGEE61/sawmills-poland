@@ -7,7 +7,7 @@ from build_leads import blockers, pair_in_words, product_for, resolve_name, role
 from contacts import clean_email, clean_phone, clean_site, email_domain, mask_fits
 from fetch_eu_projects import classify, core_of, normalize
 from crawl_websites import name_in_domain
-from web_search import extract, select_firms
+from web_search import extract, is_directory, select_firms
 
 
 class Contacts(unittest.TestCase):
@@ -88,6 +88,11 @@ class SearchResults(unittest.TestCase):
     def test_directory_is_not_the_firms_site(self):
         self.assertFalse(name_in_domain("TARTAK BYDGOSZCZ SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", "aplikuj.pl"))
         self.assertTrue(name_in_domain("GAMBEX GOŁĄBEK SPÓŁKA KOMANDYTOWA", "gambex.pl"))
+
+    def test_directory_match_is_by_whole_domain(self):
+        self.assertTrue(is_directory("mapa.targeo.pl"))
+        self.assertTrue(is_directory("drewno.pl"))
+        self.assertFalse(is_directory("tartak-drewno.pl"))
 
     def test_regon_is_not_a_phone(self):
         found = extract([{"url": "https://a.pl", "text": "NIP 7551004144. REGON: 530831216."}], "X", "7551004144")

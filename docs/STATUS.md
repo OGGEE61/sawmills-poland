@@ -21,13 +21,13 @@
 - Financial statements (RDF) return 403 from bot protection to scripts. Not worked around; no revenue or headcount.
 - By hand on each firm's card, not automated: BDO, RDF, FSC, ARiMR. Skipped: job ads, the e-drewno buyer list (unverified that it exists), PEFC, dane.gov.pl farm-beneficiary list (dead 2017 link).
 - Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
-- GUS: tested on its test server only, which anonymises sole traders. Places and Serper: tested on stubs only. SearchApi.io: tested live.
+- GUS: tested on its test server only, which anonymises sole traders. Places: tested on a stub only. SearchApi.io and Serper: tested live.
 
-**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token; GUS key; replace the SearchApi key (it was pasted in a chat); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (CEIDG support is checking bulk access); GUS key (requested 2026-11-02); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
 
 **Next**
-1. Start calling the 214 A+B firms with a phone, beginning with the "Zmiany" list. Note which firms have wood waste and buy: scoring has no sales data yet.
-2. Create a Serper account (2,500 free queries reported, no card). Run 50 firms and check the results, then the rest of the 552 tier B firms: see `docs/WORKFLOW.md`.
+1. Calls are on hold for now. When they start, begin with the "Zmiany" list and note which firms have wood waste and buy: scoring has no sales data yet.
+2. Finish the Serper search of the 552 tier B firms with no contact: see `docs/WORKFLOW.md`.
 3. When `expand_market.py verify` finishes, run `refresh.sh` to add those firms to the list.
 4. Use Google Places (billed) only if search leaves too many strong firms without a phone.
 5. When GUS and CEIDG keys arrive, run them. Both are free and cover firms that search misses.

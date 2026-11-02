@@ -35,7 +35,11 @@ DIRECTORIES = ("aleo.com", "krs-online.com.pl", "rejestr.io", "panoramafirm.pl",
                "infoveriti.pl", "pkt.pl", "firmy.net", "owg.pl", "gowork.pl", "biznes.gov.pl",
                "ceidg.gov.pl", "empoweredsystems.com", "facebook.com", "linkedin.com", "wikipedia.org",
                "olx.pl", "allegro.pl", "targeo.pl", "pb.pl", "bizraport.pl", "bizscope.pl", "biznesfinder.pl", "drewniacy.pl", "w-drewnie.pl",
-               "pigpd.pl", "aplikuj.pl", "europages.pl", "kompass.com", "lista-dlugow.pl", "atlasprzetargow.pl", "imsig.pl", "oferteo.pl", "youtube.com", "instagram.com", "dnb.com", "gov.pl")
+               "pigpd.pl", "aplikuj.pl", "europages.pl", "kompass.com", "lista-dlugow.pl", "atlasprzetargow.pl", "imsig.pl", "oferteo.pl", "youtube.com", "instagram.com", "dnb.com", "gov.pl",
+               "cabb.pl", "budownictwo.pl", "drewno.pl", "marketplanet.pl", "nipgo.pl", "analizafirm.pl", "zlotafirma.pl", "zkrs.pl",
+               "cylex-polska.pl", "baza-firm.com.pl", "cbtl.pl", "podobne-firmy.pl", "wyszukiwarkakrs.pl", "stolarstwo.org", "l4t.pl",
+               "porownajmy.to", "yelp.com", "firmy.ai", "bizneswregionie.pl", "jobnino.pl", "biznes-mapa.pl", "pracadlaspecjalisty.pl",
+               "pracuj.pl", "tartaki.com.pl", "lupik.pl", "szary-beton.pl", "solidnybiznes.pl", "laczymybiznes.pl", "sprawdz-firme.eu")
 
 
 LEGAL_FORMS = re.compile(r"\s+(SPÓŁKA (Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ|AKCYJNA|JAWNA|KOMANDYTOWA|PARTNERSKA)|"
@@ -64,6 +68,10 @@ def search(session, provider, api_key, query):
     return results
 
 
+def is_directory(host):
+    return any(host == d or host.endswith("." + d) for d in DIRECTORIES)
+
+
 def is_about_firm(text, name, nip):
     """Results often describe a similar firm; contacts count only if the text names this one."""
     if nip in re.sub(r"\D", "", text):
@@ -77,7 +85,7 @@ def extract(results, name, nip):
     phones, emails, sites, sources = set(), set(), [], []
     for r in results:
         host = urlparse(r["url"]).netloc.lower().removeprefix("www.")
-        is_dir = any(host.endswith(d) for d in DIRECTORIES)
+        is_dir = is_directory(host)
         about_firm = is_about_firm(r["text"], name, nip)
         found_phones = {re.sub(r"\s|-", "", p) for p in PHONE_RE.findall(r["text"])} if about_firm else set()
         found_emails = set(EMAIL_RE.findall(r["text"])) if about_firm else set()

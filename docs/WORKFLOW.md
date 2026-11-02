@@ -136,7 +136,7 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 | Wider market | `expand_market.py` | pallets, joinery, flooring, furniture, forestry companies | nothing. Sole traders outside 16.10 need a new CEIDG run with a token |
 | GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested on GUS's test server |
 | Google Maps | `google_places.py` | phone, website, Maps link | `GOOGLE_PLACES_KEY` (billed). Tested on a stub only |
-| Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` (tested live) or `SERPER_API_KEY` (tested on a stub only). Billed |
+| Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` or `SERPER_API_KEY` (both tested live). Billed |
 
 **Which machine:** `WASTE_RULES` in `build_leads.py` maps main PKD to chipper, briquetter and typical waste. These are assumptions: correct them from real conversations.
 
