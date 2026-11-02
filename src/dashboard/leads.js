@@ -145,6 +145,12 @@ function bar(label, score) {
     return `<span>${esc(label)}</span><div class="bar"><i style="width:${Number(score)}%"></i></div><span>${Number(score)}</span>`;
 }
 
+// villages have no street, so the register's street field holds only the house number
+function addressLine(l) {
+    const street = /^\d/.test(l.street || '') && l.city ? `${l.city} ${l.street}` : l.street;
+    return [street, [l.postal_code, l.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || 'brak adresu';
+}
+
 function openPanel(nip) {
     const l = leads.find(x => x.nip === nip);
     if (!l) return;
@@ -158,7 +164,7 @@ function openPanel(nip) {
     panel.innerHTML = `
         <button class="panel-close" id="panelClose" aria-label="Zamknij">✕</button>
         <h2>${esc(l.name)}</h2>
-        <div class="sub">${esc(l.street)}, ${esc(l.postal_code)} ${esc(l.city)} · ${esc((l.voivodeship || '').toLowerCase())} · ${esc(l.source)} · NIP ${esc(l.nip)}</div>
+        <div class="sub">${esc(addressLine(l))} · ${esc((l.voivodeship || '').toLowerCase())} · ${esc(l.source)} · NIP ${esc(l.nip)}</div>
         <div class="opening"><small>Oferta: ${esc(l.product || 'do ustalenia')}. Pierwsze zdanie do rozmowy:</small>${esc(l.opening)}</div>
         <div class="sub" style="margin-top:6px">Ustal w rozmowie: ile odpadu dziennie (maszyna 0,5-2 t/h), jaki rodzaj (trociny, wióry, zrzyny), co dziś z nim robią.</div>
 

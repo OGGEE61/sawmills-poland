@@ -321,6 +321,10 @@ function loadData() {
             });
         });
 
+        // the source files hold empty values as the text "nan"
+        tempData.forEach(row => Object.keys(row).forEach(key => {
+            if (typeof row[key] === 'string' && /^(nan|none|null)$/i.test(row[key].trim())) row[key] = '';
+        }));
         allData = tempData;
         filteredData = [...allData];
         
@@ -559,8 +563,11 @@ function openCompanyModal(row) {
     const kodPoczt = row['detail.adresDzialalnosci.kod'] || row['postal_code'] || '-';
     const poczta = row['post_office'] || miasto;
 
-    let adresWiersz = miasto;
-    if (ulica) adresWiersz = `${ulica} ${nrDomu}${nrLokalu ? '/' + nrLokalu : ''}, ${kodPoczt} ${miasto}`;
+    // villages have no street: the address is then "Miejscowość 12"
+    const numer = nrDomu + (nrDomu && nrLokalu ? '/' + nrLokalu : '');
+    const ulicaZNumerem = [ulica || (numer && miasto !== '-' ? miasto : ''), numer].filter(Boolean).join(' ');
+    const kodIMiasto = [kodPoczt, miasto].filter(part => part !== '-').join(' ');
+    const adresWiersz = [ulicaZNumerem, kodIMiasto].filter(Boolean).join(', ') || '-';
 
     // Contact
     const email = contactOf(row, 'email', 'EMAIL');
@@ -639,7 +646,7 @@ function openCompanyModal(row) {
             <div class="modal-grid-2">
                 <div class="modal-detail-item" style="grid-column: 1 / -1;">
                     <span class="detail-label">Adres prowadzenia działalności</span>
-                    <span class="detail-value">${adresWiersz}</span>
+                    <span class="detail-value">${esc(adresWiersz)}</span>
                 </div>
                 <div class="modal-detail-item">
                     <span class="detail-label">Województwo</span>
