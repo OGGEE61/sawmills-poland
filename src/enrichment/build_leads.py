@@ -484,7 +484,7 @@ def build_rows():
                 voivodeship=base.get("voivodeship") or sig.get("voivodeship_raw", ""), county=sig.get("county_raw", ""),
                 municipality=sig.get("municipality_raw", ""), city=base.get("city", ""),
                 street=" ".join(x for x in (base.get("street", ""), base.get("building_no", "")) if x),
-                postal_code=base.get("postal_code", ""), started=base.get("registration_date", ""),
+                postal_code=base.get("postal_code", ""), post_office=base.get("post_office", ""), started=base.get("registration_date", ""),
                 main_pkd=sig.get("main_pkd", "") or base.get("pkd_main", ""), pkd_count=int(number(sig.get("pkd_count"))),
                 all_pkd=sig.get("all_pkd", ""), share_capital=number(sig.get("share_capital_pln")),
                 latest_filing_year=int(number(sig.get("latest_filing_year"))), filings_count=int(number(sig.get("filings_count"))),
@@ -506,7 +506,7 @@ def build_rows():
             row.update(
                 legal_form="JDG", status=base.get("STATUS", "AKTYWNY"), voivodeship=base.get("detail.adresDzialalnosci.wojewodztwo", ""),
                 county=base.get("detail.adresDzialalnosci.powiat", ""), municipality=base.get("detail.adresDzialalnosci.gmina", ""),
-                city=base.get("detail.adresDzialalnosci.miasto", ""), street=building, postal_code=base.get("detail.adresDzialalnosci.kod", ""),
+                city=base.get("detail.adresDzialalnosci.miasto", ""), street=building, postal_code=base.get("detail.adresDzialalnosci.kod", ""), post_office="",
                 started=base.get("detail.dataRozpoczecia", ""), main_pkd=f"{main[:2]}.{main[2:4]}.{main[4:]}" if main else "",
                 pkd_count=len(pkd_dotted), all_pkd="; ".join(pkd_dotted), share_capital=0.0, latest_filing_year=0, filings_count=0,
                 branches=0, open_arrears=0, extra_sites=not missing(base.get("detail.adresyDzialalnosciDodatkowe")),
@@ -570,7 +570,7 @@ def score(row):
 
 
 COLUMNS = ["tier", "priority", "fit", "capacity", "timing", "reach", "action", "product", "size_band", "changes", "name", "nip", "source", "source_id", "legal_form", "status",
-           "verification", "voivodeship", "county", "municipality", "city", "street", "postal_code", "contact_person", "contact_role",
+           "verification", "voivodeship", "county", "municipality", "city", "street", "postal_code", "post_office", "contact_person", "contact_role",
            "contact_person_source", "contact_initials", "phone", "phone_source", "email", "email_source", "other_phones", "other_emails", "website", "contact_url",
            "all_tags", "reasons", "warnings", "blockers", "opening", "started", "main_pkd", "pkd_count", "share_capital", "latest_filing_year",
            "eu_count", "eu_value", "maps_url", "people_json", "eu_json"]

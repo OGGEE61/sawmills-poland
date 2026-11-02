@@ -317,7 +317,7 @@ function loadData() {
                 STATUS: l.status, PKD_GLOWNE_KOD: l.main_pkd, legal_form: l.legal_form, 'detail.dataRozpoczecia': l.started,
                 'detail.adresDzialalnosci.wojewodztwo': l.voivodeship, 'detail.adresDzialalnosci.powiat': l.county,
                 'detail.adresDzialalnosci.gmina': l.municipality, 'detail.adresDzialalnosci.miasto': l.city,
-                'detail.adresDzialalnosci.ulica': l.street, 'detail.adresDzialalnosci.kod': l.postal_code
+                'detail.adresDzialalnosci.ulica': l.street, 'detail.adresDzialalnosci.kod': l.postal_code, post_office: l.post_office
             });
         });
 
@@ -561,13 +561,15 @@ function openCompanyModal(row) {
     const nrDomu = row['detail.adresDzialalnosci.budynek'] || row['building_no'] || '';
     const nrLokalu = row['detail.adresDzialalnosci.lokal'] || row['unit_no'] || '';
     const kodPoczt = row['detail.adresDzialalnosci.kod'] || row['postal_code'] || '-';
-    const poczta = row['post_office'] || miasto;
 
-    // villages have no street: the address is then "Miejscowość 12"
     const numer = nrDomu + (nrDomu && nrLokalu ? '/' + nrLokalu : '');
-    const ulicaZNumerem = [ulica || (numer && miasto !== '-' ? miasto : ''), numer].filter(Boolean).join(' ');
-    const kodIMiasto = [kodPoczt, miasto].filter(part => part !== '-').join(' ');
-    const adresWiersz = [ulicaZNumerem, kodIMiasto].filter(Boolean).join(', ') || '-';
+    const adresWiersz = formatAddress({
+        street: [ulica, numer].filter(Boolean).join(' '),
+        city: miasto === '-' ? '' : miasto,
+        postalCode: kodPoczt === '-' ? '' : kodPoczt,
+        postOffice: row['post_office']
+    }) || '-';
+    const pocztaWiersz = [kodPoczt === '-' ? '' : kodPoczt, nicePlace(row['post_office'])].filter(Boolean).join(' ') || '-';
 
     // Contact
     const email = contactOf(row, 'email', 'EMAIL');
@@ -662,7 +664,7 @@ function openCompanyModal(row) {
                 </div>
                 <div class="modal-detail-item">
                     <span class="detail-label">Poczta / Kod pocztowy</span>
-                    <span class="detail-value">${kodPoczt} ${poczta}</span>
+                    <span class="detail-value">${esc(pocztaWiersz)}</span>
                 </div>
             </div>
         </div>
