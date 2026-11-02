@@ -26,8 +26,8 @@
 **Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (CEIDG support is checking bulk access); GUS key (requested 2026-11-02); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
 
 **Next**
-1. Decide where the team uses the tool. The public site has registry data only; the full list needs a site behind login (Cloudflare Access) or stays local.
-2. Check the top of the list with sales and adjust the size rule, starting with the second-address sign. Scoring has no sales data yet.
+1. For now the tool is for the user only, so the full list stays local. The public site has registry data only.
+2. The user confirmed the top 15 firms with a phone as firms worth contacting (2026-11-02), so the size rule stays. This is a judgement, not sales data: review it after the first conversations.
 3. Spend the remaining Serper queries only on strong companies, if contacts run short.
 4. Use Google Places (billed) only if search leaves too many strong firms without a phone.
 5. When GUS and CEIDG keys arrive, run GUS first. Do not run `fetch_data.py --wood` by default: it adds thousands of small sole traders.
