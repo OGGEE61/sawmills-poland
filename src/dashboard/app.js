@@ -581,14 +581,6 @@ function openCompanyModal(row) {
     modalStatusBadge.textContent = status;
     modalStatusBadge.className = `badge ${status === 'AKTYWNY' ? 'badge-active' : (status === 'W LIKWIDACJI' ? 'badge-liquidation' : (status === 'ZAWIESZONY' ? 'badge-suspended' : 'badge-deleted'))}`;
 
-    // Registry links
-    let rejestrLinkHtml = '';
-    if (rejestr === 'KRS' && krs && krs !== '-') {
-        rejestrLinkHtml = `<a href="https://wyszukiwarka-krs.ms.gov.pl/" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 600; text-decoration: underline;">Wyszukaj w Portalu Rejestrów Sądowych eKRS &rarr;</a>`;
-    } else if (rejestr === 'CEIDG' && nip && nip !== '-') {
-        rejestrLinkHtml = `<a href="https://aplikacja.ceidg.gov.pl/ceidg/ceidg.here.public.ui/Search.aspx" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 600; text-decoration: underline;">Wyszukaj wpis w Portalu Biznes.gov.pl (CEIDG) &rarr;</a>`;
-    }
-
     modalBody.innerHTML = `
         ${salesSectionHtml(row)}
 
@@ -708,7 +700,6 @@ function openCompanyModal(row) {
                     <span class="detail-value">${www !== '-' ? `<a href="${esc(/^https?:\/\//i.test(www) ? www : 'http://' + www)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">${esc(www)}</a>` : '-'}</span>
                 </div>
             </div>
-            ${rejestrLinkHtml ? `<div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border);">${rejestrLinkHtml}</div>` : ''}
         </div>
     `;
 

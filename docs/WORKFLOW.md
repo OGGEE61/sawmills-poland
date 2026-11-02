@@ -144,7 +144,7 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 
 **Scoring** is hand-set rules, not trained on sales: `priority = 0.45 fit + 0.30 capacity + 0.25 timing`, where capacity means right size, not biggest. Firms sized `duża` or `mała` (`size_band`) cannot be tier A or B. A sole trader counts as `mała` unless it has its own website, an EU project or a second address. The dashboard shows tiers as fit labels: A "Bardzo dobre", B "Dobre", C "Średnie", D "Słabe", X "Odrzucona". `reach` is separate, so a strong firm with no phone becomes a research job. Tier X means closing or closed.
 
-**Checked by hand on each firm's card, not automated:** BDO, financial statements (RDF), FSC, ARiMR. None offers a bulk route we found; RDF blocks scripts. Do not automate around that.
+**Left out:** BDO, financial statements (RDF), FSC, ARiMR. None offers a bulk route we found; RDF blocks scripts. Do not automate around that. We plan only what can be automated, so the cards have no manual-lookup links.
 
 **This is a tool for finding firms, not a CRM.** Calls, stages and notes belong in Salesforce. The dashboard keeps no sales status.
 

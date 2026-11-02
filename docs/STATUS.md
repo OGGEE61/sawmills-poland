@@ -19,7 +19,7 @@
 - Waste volume is not known for any firm: PKD and website words are stand-ins.
 - KRS API masks names. For most companies we know the role and initials only.
 - Financial statements (RDF) return 403 from bot protection to scripts. Not worked around; no revenue or headcount.
-- By hand on each firm's card, not automated: BDO, RDF, FSC, ARiMR. Skipped: job ads, the e-drewno buyer list (unverified that it exists), PEFC, dane.gov.pl farm-beneficiary list (dead 2017 link).
+- Left out, no bulk route that scripts may use: BDO, RDF, FSC, ARiMR. We plan only what can be automated (user, 2026-11-02). Also skipped: job ads, the e-drewno buyer list (unverified that it exists), PEFC, dane.gov.pl farm-beneficiary list (dead 2017 link).
 - Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
 - GUS: tested on its test server only, which anonymises sole traders. Places: tested on a stub only. SearchApi.io and Serper: tested live.
 

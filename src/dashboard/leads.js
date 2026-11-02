@@ -150,7 +150,6 @@ function openPanel(nip) {
     if (!l) return;
     const people = parseJson(l.people_json);
     const projects = parseJson(l.eu_json);
-    const query = encodeURIComponent(`${l.name} ${l.city}`);
     const panel = document.getElementById('panel');
     const site = safeUrl(l.website), contactPage = safeUrl(l.contact_url);
     const contactLine = (href, text, source) => `<div class="contact-line"><a class="phone" href="${esc(href)}">${esc(text)}</a>${source ? `<small>${esc(source)}</small>` : ''}</div>`;
@@ -169,20 +168,14 @@ function openPanel(nip) {
             ${extra(l.other_phones, 'tel:')}
             ${l.email ? contactLine('mailto:' + l.email, l.email, l.email_source) : ''}
             ${extra(l.other_emails, 'mailto:')}
-            ${!l.phone && !l.email ? '<p class="sub">Brak w rejestrach i na stronie. Sprawdź ręcznie:</p>' : ''}
+            ${!l.phone && !l.email ? '<p class="sub">Brak telefonu i e-maila w naszych źródłach.</p>' : ''}
             <div class="link-row">
                 ${site ? `<a href="${esc(site)}" target="_blank" rel="noopener noreferrer">Strona firmy</a>` : ''}
                 ${contactPage ? `<a href="${esc(contactPage)}" target="_blank" rel="noopener noreferrer">Podstrona kontaktu</a>` : ''}
-                <a href="https://www.google.com/search?q=${query}" target="_blank" rel="noopener noreferrer">Szukaj w Google</a>
-                <a href="${esc(safeUrl(l.maps_url) || 'https://www.google.com/maps/search/' + query)}" target="_blank" rel="noopener noreferrer">Mapy</a>
+                ${safeUrl(l.maps_url) ? `<a href="${esc(l.maps_url)}" target="_blank" rel="noopener noreferrer">Mapy</a>` : ''}
             </div>
             <div class="link-row" style="margin-top:8px">
                 <button id="copyNip" class="btn btn-secondary btn-sm">Kopiuj NIP</button>
-                <a href="https://www.google.com/search?q=${encodeURIComponent(l.name + ' trociny OR zrębki OR brykiet')}" target="_blank" rel="noopener noreferrer">Co robią z odpadem</a>
-                <a href="https://rejestr-bdo.mos.gov.pl/" target="_blank" rel="noopener noreferrer">BDO</a>
-                ${l.source === 'KRS' ? '<a href="https://rdf-przegladarka.ms.gov.pl/" target="_blank" rel="noopener noreferrer">Sprawozdania (RDF)</a>' : ''}
-                <a href="https://search.fsc.org/en/" target="_blank" rel="noopener noreferrer">FSC</a>
-                <a href="https://beneficjenciwpr.minrol.gov.pl/" target="_blank" rel="noopener noreferrer">ARiMR</a>
             </div>
         </div>
 
