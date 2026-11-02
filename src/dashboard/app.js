@@ -3,36 +3,11 @@ let filteredData = [];
 let currentPage = 1;
 let rowsPerPage = 50;
 
-let contactedFirms = JSON.parse(localStorage.getItem('contactedFirms')) || {};
-const CRM_KEY = 'leadCrm'; // shared with leads.js
-let leadCrm = readLeadCrm();
+const FIT_LABELS = { A: 'Bardzo dobre', B: 'Dobre', C: 'Średnie', D: 'Słabe', X: 'Odrzucona' };
 
-function readLeadCrm() {
-    try {
-        return JSON.parse(localStorage.getItem(CRM_KEY)) || {};
-    } catch (e) {
-        return {};
-    }
-}
-
-function isContactedRow(row, id) {
-    const stage = row.LEAD && leadCrm[row.LEAD.nip] && leadCrm[row.LEAD.nip].stage;
-    return !!contactedFirms[id] || (!!stage && stage !== 'Nowy');
-}
-
-// The checkbox and the sales list's stage are one status
-function setContacted(id, nip, checked) {
-    if (checked) contactedFirms[id] = true;
-    else delete contactedFirms[id];
-    localStorage.setItem('contactedFirms', JSON.stringify(contactedFirms));
-    if (!nip) return;
-    leadCrm = readLeadCrm();
-    const entry = leadCrm[nip] || { notes: '', next: '' };
-    const stage = entry.stage || 'Nowy';
-    if (checked && stage === 'Nowy') entry.stage = 'Próba kontaktu';
-    if (!checked && stage === 'Próba kontaktu') entry.stage = 'Nowy';
-    leadCrm[nip] = entry;
-    localStorage.setItem(CRM_KEY, JSON.stringify(leadCrm));
+function fitBadge(lead) {
+    if (!lead) return '-';
+    return `<span class="fit fit-${esc(lead.tier)}" title="Wynik ${esc(lead.priority)}/100. Szczegóły na karcie firmy.">${esc(FIT_LABELS[lead.tier] || lead.tier)}</span>`;
 }
 
 function esc(value) {
@@ -89,11 +64,9 @@ const statusFilter = document.getElementById('statusFilter');
 const miastoFilter = document.getElementById('miastoFilter');
 const kodFilter = document.getElementById('kodFilter');
 const searchFilter = document.getElementById('searchFilter');
-const contactedFilter = document.getElementById('contactedFilter');
 const vatFilter = document.getElementById('vatFilter');
 const contactDataFilter = document.getElementById('contactDataFilter');
 const tierFilter = document.getElementById('tierFilter');
-const actionFilter = document.getElementById('actionFilter');
 const productFilter = document.getElementById('productFilter');
 const pkdFilter = document.getElementById('pkdFilter');
 const hideNanRegion = document.getElementById('hideNanRegion');
@@ -150,11 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
     wojewodztwoFilter.addEventListener('change', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
     hideNanRegion.addEventListener('change', applyFilters);
-    contactedFilter.addEventListener('change', applyFilters);
     vatFilter.addEventListener('change', applyFilters);
     contactDataFilter.addEventListener('change', applyFilters);
     tierFilter.addEventListener('change', applyFilters);
-    actionFilter.addEventListener('change', applyFilters);
     productFilter.addEventListener('change', applyFilters);
     document.querySelectorAll('.page-tab').forEach(btn => btn.addEventListener('click', () => showPage(btn.dataset.page)));
     pkdFilter.addEventListener('change', applyFilters);
@@ -190,11 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
         miastoFilter.value = '';
         kodFilter.value = '';
         searchFilter.value = '';
-        contactedFilter.value = 'ALL';
         vatFilter.value = 'ALL';
         contactDataFilter.value = '';
         tierFilter.value = '';
-        actionFilter.value = '';
         productFilter.value = '';
         pkdFilter.value = '';
         selectedYearFilter = null;
@@ -417,10 +386,8 @@ function applyFilters() {
     const mFilter = miastoFilter.value.toLowerCase();
     const kFilter = kodFilter.value.toLowerCase();
     const term = searchFilter.value.toLowerCase();
-    const cFilter = contactedFilter.value;
     const vFilter = vatFilter.value;
     const tierVal = tierFilter.value;
-    const actionVal = actionFilter.value;
     const rFilter = currentRejestrTab;
     const pkdVal = pkdFilter.value.toLowerCase();
     const hideNan = hideNanRegion.checked;
@@ -432,7 +399,6 @@ function applyFilters() {
         const kod = (row['detail.adresDzialalnosci.kod'] || '').toLowerCase();
         const nazwa = (row['NAZWA'] || '').toLowerCase();
         const nip = (row['NIP'] || '').toLowerCase();
-        const ceidgId = row['CEIDG_ID'] || row['id'] || nip;
         const rowPkd = (row['PKD_GLOWNE_KOD'] || '').toLowerCase();
         const rejestr = (row['REJESTR'] || 'CEIDG').toUpperCase();
         const rowYear = extractYear(row['detail.dataRozpoczecia']);
@@ -448,13 +414,14 @@ function applyFilters() {
         
         const matchRejestr = rFilter === 'ALL' || rejestr === rFilter;
         
-        const isContacted = isContactedRow(row, ceidgId);
-        const matchContacted = cFilter === 'ALL' || (cFilter === 'YES' && isContacted) || (cFilter === 'NO' && !isContacted);
         const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
-        const matchLead = matchesTier(row, tierVal) && (!actionVal || (row.LEAD && row.LEAD.action === actionVal)) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
+        const matchLead = matchesTier(row, tierVal) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
         
-        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchYear && matchVat && matchLead && matchesContactData(row, contactDataFilter.value);
+        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchPkd && matchRejestr && matchYear && matchVat && matchLead && matchesContactData(row, contactDataFilter.value);
     });
+    const moreCount = ['miastoFilter', 'kodFilter', 'productFilter'].filter(id => document.getElementById(id).value).length
+        + (vatFilter.value !== 'ALL' ? 1 : 0) + (statusFilter.value !== 'ALL' ? 1 : 0) + (hideNanRegion.checked ? 0 : 1);
+    document.getElementById('moreFiltersCount').textContent = moreCount ? `(${moreCount})` : '';
     filteredData.sort((a, b) => (b.LEAD ? Number(b.LEAD.priority) : -1) - (a.LEAD ? Number(a.LEAD.priority) : -1));
     
     currentPage = 1;
@@ -506,7 +473,6 @@ function renderTable() {
         
         // Extract values handling potential missing keys
         const nazwa = row['NAZWA'] || '-';
-        const nip = row['detail.wlasciciel.nip'] || row['summary.wlasciciel.nip'] || row['NIP'] || row['nip'] || '-';
         const woj = row['detail.adresDzialalnosci.wojewodztwo'] || row['voivodeship'] || '';
         const miasto = row['detail.adresDzialalnosci.miasto'] || row['city'] || '';
         const miejsce = [miasto, woj].filter(part => part && part !== 'nan').join(', ').toLowerCase();
@@ -515,15 +481,12 @@ function renderTable() {
         const www = contactOf(row, 'website', 'WWW');
         const status = row['STATUS'] || '-';
 
-        const ceidgId = row['CEIDG_ID'] || row['id'] || nip;
-        const isContacted = isContactedRow(row, ceidgId);
         const statusBadgeClass = status === 'W LIKWIDACJI' ? 'badge-liquidation' : (status === 'ZAWIESZONY' ? 'badge-suspended' : 'badge-deleted');
         // only an exception is worth space in the row: the full status is on the card
         const statusNote = status === 'AKTYWNY' ? '' : ` <span class="badge ${statusBadgeClass}">${esc(status)}</span>`;
 
         tr.innerHTML = `
-            <td style="text-align: center;"><input type="checkbox" class="contact-checkbox" data-id="${ceidgId}" data-nip="${esc(row.LEAD ? row.LEAD.nip : '')}" ${isContacted ? 'checked' : ''} title="Oznacz jako skontaktowane"></td>
-            <td>${row.LEAD ? `<div class="score"><span class="tier tier-${esc(row.LEAD.tier)}">${esc(row.LEAD.tier)}</span><b>${esc(row.LEAD.priority)}</b></div>` : '-'}</td>
+            <td>${fitBadge(row.LEAD)}</td>
             <td class="col-nazwa"><strong>${esc(nazwa)}</strong>${statusNote}${miejsce ? `<br><small style="color: var(--text-muted); text-transform: capitalize;">${esc(miejsce)}</small>` : ''}</td>
             <td>${personHtml(row.LEAD)}</td>
             <td>${telefon !== '-' ? `<a class="phone" href="tel:${esc(telefon.replace(/\s/g, ''))}">${esc(telefon)}</a>` : '-'}</td>
@@ -533,7 +496,7 @@ function renderTable() {
 
         // Click row to open modal
         tr.addEventListener('click', (e) => {
-            if (e.target.closest('.contact-checkbox') || e.target.closest('a')) return;
+            if (e.target.closest('a')) return;
             openCompanyModal(row);
         });
 
@@ -551,15 +514,6 @@ function renderTable() {
     nextPageBtn.disabled = currentPage === maxPage;
     lastPageBtn.disabled = currentPage === maxPage;
 
-    // Add event listeners to checkboxes
-    document.querySelectorAll('.contact-checkbox').forEach(cb => {
-        cb.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-        cb.addEventListener('change', (e) => {
-            setContacted(e.target.getAttribute('data-id'), e.target.getAttribute('data-nip'), e.target.checked);
-        });
-    });
 }
 
 function openCompanyModal(row) {
@@ -609,8 +563,6 @@ function openCompanyModal(row) {
     const email = contactOf(row, 'email', 'EMAIL');
     const telefon = contactOf(row, 'phone', 'TELEFON');
     const www = contactOf(row, 'website', 'WWW');
-    const ceidgId = row['CEIDG_ID'] || row['id'] || nip;
-    const isContacted = isContactedRow(row, ceidgId);
 
     // PKD
     const pkdMain = row['PKD_GLOWNE_KOD'] || row['pkd_main'] || '-';
@@ -736,9 +688,9 @@ function openCompanyModal(row) {
             </div>` : ''}
         </div>
 
-        <!-- Kontakt i status CRM -->
+        <!-- Kontakt -->
         <div class="modal-section">
-            <div class="modal-section-title">📞 Kontakt i Status Lead CRM</div>
+            <div class="modal-section-title">📞 Kontakt</div>
             <div class="modal-grid-2">
                 <div class="modal-detail-item">
                     <span class="detail-label">Telefon</span>
@@ -751,15 +703,6 @@ function openCompanyModal(row) {
                 <div class="modal-detail-item">
                     <span class="detail-label">Strona WWW</span>
                     <span class="detail-value">${www !== '-' ? `<a href="${esc(/^https?:\/\//i.test(www) ? www : 'http://' + www)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">${esc(www)}</a>` : '-'}</span>
-                </div>
-                <div class="modal-detail-item">
-                    <span class="detail-label">Status kontaktu</span>
-                    <label style="display: flex; align-items: center; gap: 8px; margin-top: 4px; cursor: pointer;">
-                        <input type="checkbox" id="modalContactCheckbox" data-id="${ceidgId}" data-nip="${esc(row.LEAD ? row.LEAD.nip : '')}" ${isContacted ? 'checked' : ''} class="contact-checkbox">
-                        <span style="font-weight: 600; color: ${isContacted ? 'var(--success)' : 'var(--text-muted)'};">
-                            ${isContacted ? '✓ Oznaczono jako skontaktowane' : 'Oznacz jako skontaktowane'}
-                        </span>
-                    </label>
                 </div>
             </div>
             ${rejestrLinkHtml ? `<div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border);">${rejestrLinkHtml}</div>` : ''}
@@ -777,14 +720,6 @@ function openCompanyModal(row) {
         });
     }
 
-    // Hook up modal contact checkbox
-    const modalCb = document.getElementById('modalContactCheckbox');
-    if (modalCb) {
-        modalCb.addEventListener('change', (e) => {
-            setContacted(e.target.getAttribute('data-id'), e.target.getAttribute('data-nip'), e.target.checked);
-            renderTable(); // Update checkbox in table
-        });
-    }
 }
 
 function closeCompanyModal() {
@@ -856,10 +791,8 @@ function renderCharts() {
     const mFilter = miastoFilter.value.toLowerCase();
     const kFilter = kodFilter.value.toLowerCase();
     const term = searchFilter.value.toLowerCase();
-    const cFilter = contactedFilter.value;
     const vFilter = vatFilter.value;
     const tierVal = tierFilter.value;
-    const actionVal = actionFilter.value;
     const rFilter = currentRejestrTab;
     const pkdVal = pkdFilter.value.toLowerCase();
     const hideNan = hideNanRegion.checked;
@@ -872,7 +805,6 @@ function renderCharts() {
         const kod = (row['detail.adresDzialalnosci.kod'] || '').toLowerCase();
         const nazwa = (row['NAZWA'] || '').toLowerCase();
         const nip = (row['NIP'] || '').toLowerCase();
-        const ceidgId = row['CEIDG_ID'] || row['id'] || nip;
         const rowPkd = (row['PKD_GLOWNE_KOD'] || '').toLowerCase();
         const rejestr = (row['REJESTR'] || 'CEIDG').toUpperCase();
         
@@ -884,12 +816,10 @@ function renderCharts() {
         const matchNan = !hideNan || (woj !== 'nan' && woj !== '');
         const matchPkd = !pkdVal || rowPkd === pkdVal;
         const matchRejestr = rFilter === 'ALL' || rejestr === rFilter;
-        const isContacted = isContactedRow(row, ceidgId);
-        const matchContacted = cFilter === 'ALL' || (cFilter === 'YES' && isContacted) || (cFilter === 'NO' && !isContacted);
         const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
-        const matchLead = matchesTier(row, tierVal) && (!actionVal || (row.LEAD && row.LEAD.action === actionVal)) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
+        const matchLead = matchesTier(row, tierVal) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
         
-        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchVat && matchLead && matchesContactData(row, contactDataFilter.value)) {
+        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchPkd && matchRejestr && matchVat && matchLead && matchesContactData(row, contactDataFilter.value)) {
             const y = extractYear(row['detail.dataRozpoczecia']);
             if (y) {
                 yearCounts[y] = (yearCounts[y] || 0) + 1;
@@ -1057,20 +987,15 @@ function showPage(page, nip) {
     frame.hidden = !sales;
     document.querySelector('.main-content').hidden = sales;
     document.querySelectorAll('.page-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.page === page));
-    if (!sales) { // stages may have changed on the sales list
-        leadCrm = readLeadCrm();
-        applyFilters();
-    }
 }
 
 function salesSectionHtml(row) {
     const l = row.LEAD;
     if (!l) return '';
-    const stage = (leadCrm[l.nip] && leadCrm[l.nip].stage) || 'Nowy';
     const chips = (text, cls) => (text || '').split('; ').filter(Boolean).map(t => `<span class="chip ${cls}">${esc(t)}</span>`).join('');
     return `
         <div class="modal-section">
-            <div class="modal-section-title">🎯 Sprzedaż: klasa ${esc(l.tier)}, priorytet ${esc(l.priority)}, etap: ${esc(stage)}</div>
+            <div class="modal-section-title">🎯 Dopasowanie: ${esc(FIT_LABELS[l.tier] || l.tier)} (${esc(l.priority)}/100)</div>
             <div class="opening"><small>Oferta: ${esc(l.product || 'do ustalenia')}. Pierwsze zdanie do rozmowy:</small>${esc(l.opening)}</div>
             <div class="modal-grid-2" style="margin-top: 12px;">
                 <div class="modal-detail-item">
@@ -1083,7 +1008,7 @@ function salesSectionHtml(row) {
                 </div>
             </div>
             <div style="margin-top: 10px;">${chips(l.reasons, '')}${chips(l.warnings, 'chip-warn')}${chips(l.blockers, 'chip-warn')}${chips(l.all_tags, '')}</div>
-            <div style="margin-top: 10px;"><a href="leads.html#${esc(l.nip)}" data-open-lead="${esc(l.nip)}" style="color: var(--accent); font-weight: 600; text-decoration: underline;">Pełna karta: ludzie, projekty UE, notatki i termin &rarr;</a></div>
+            <div style="margin-top: 10px;"><a href="leads.html#${esc(l.nip)}" data-open-lead="${esc(l.nip)}" style="color: var(--accent); font-weight: 600; text-decoration: underline;">Pełna karta: ludzie, projekty UE, skąd ta ocena &rarr;</a></div>
         </div>
     `;
 }

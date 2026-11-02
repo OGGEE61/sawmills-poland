@@ -27,9 +27,14 @@
 .leads-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .leads-table tbody tr { cursor: pointer; }
 .leads-table tbody tr:hover { background: var(--accent-light); }
-.leads-table tbody tr.is-out { opacity: .55; }
 .firm-name { font-weight: 600; max-width: 340px; }
 .sub { color: var(--text-muted); font-size: 12px; }
+.fit { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.fit-A { background: var(--accent); color: #fff; }
+.fit-B { background: var(--accent-light); color: var(--accent-hover); }
+.fit-C { background: #f1ede4; color: var(--text-main); }
+.fit-D { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.fit-X { background: var(--danger-light); color: var(--danger); }
 .score { display: flex; align-items: center; gap: 8px; }
 .score b { font-size: 16px; font-variant-numeric: tabular-nums; }
 .tier { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 6px; font-weight: 700; font-size: 13px; background: var(--border); color: var(--text-main); }
@@ -62,10 +67,6 @@
 .person { margin-bottom: 4px; font-size: 13px; }
 .project { margin-bottom: 10px; font-size: 13px; }
 .project b { font-weight: 600; }
-.crm-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.crm-form label { font-size: 12px; font-weight: 600; display: flex; flex-direction: column; gap: 3px; }
-.crm-form .wide { grid-column: 1 / -1; }
-.crm-form textarea { min-height: 76px; resize: vertical; }
 .link-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; }
 
 @media (max-width: 720px) {

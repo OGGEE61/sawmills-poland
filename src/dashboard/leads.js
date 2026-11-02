@@ -1,58 +1,24 @@
-const STAGES = ['Nowy', 'Próba kontaktu', 'Rozmowa', 'Zainteresowany', 'Oferta', 'Wygrany', 'Odpada', 'Nie kontaktować'];
-const CLOSED_STAGES = ['Wygrany', 'Odpada', 'Nie kontaktować'];
+const FIT_LABELS = { A: 'Bardzo dobre', B: 'Dobre', C: 'Średnie', D: 'Słabe', X: 'Odrzucona' };
 const PAGE_SIZE = 50;
-const CRM_KEY = 'leadCrm';
 const today = new Date().toISOString().slice(0, 10);
 
 let leads = [];
 let filtered = [];
 let page = 0;
 let activeView = 'call';
-let crm = loadCrm();
 
 const VIEWS = {
-    call: { title: 'Dzwoń teraz', hint: 'Klasa A/B z telefonem, jeszcze bez kontaktu', test: l => isTop(l) && l.phone && stageOf(l) === 'Nowy' },
-    write: { title: 'Napisz', hint: 'Klasa A/B z e-mailem, bez telefonu', test: l => isTop(l) && !l.phone && l.email && stageOf(l) === 'Nowy' },
+    call: { title: 'Dzwoń teraz', hint: 'Bardzo dobre i dobre, z telefonem', test: l => isTop(l) && l.phone },
+    write: { title: 'Napisz', hint: 'Bardzo dobre i dobre, z e-mailem, bez telefonu', test: l => isTop(l) && !l.phone && l.email },
     waste: { title: 'Projekty o odpadach', hint: 'Świeże projekty UE: odpady, biomasa, GOZ', test: l => l.timing >= 95 && l.tier !== 'X' },
     grants: { title: 'Projekty na maszyny', hint: 'Świeże projekty UE: więcej produkcji, więcej odpadu', test: l => l.timing === 75 && l.tier !== 'X' },
     changes: { title: 'Zmiany', hint: 'Nowe od ostatniej aktualizacji danych', test: l => !!l.changes && l.tier !== 'X' },
     big: { title: 'Duże firmy', hint: 'Za duże na tę linię: do przekazania głównej linii Weima', test: l => l.size_band === 'duża' && l.tier !== 'X' },
-    research: { title: 'Do zbadania', hint: 'Klasa A/B bez telefonu i e-maila', test: l => isTop(l) && l.action === 'Znajdź kontakt' },
-    pipeline: { title: 'W toku', hint: 'Masz kontakt, sprawa otwarta', test: l => !['Nowy', ...CLOSED_STAGES].includes(stageOf(l)) },
-    due: { title: 'Na dziś', hint: 'Termin następnego kroku minął', test: l => { const c = crm[l.nip]; return c && c.next && c.next <= today && !CLOSED_STAGES.includes(stageOf(l)); } },
+    research: { title: 'Do zbadania', hint: 'Bardzo dobre i dobre, bez telefonu i e-maila', test: l => isTop(l) && l.action === 'Znajdź kontakt' },
     all: { title: 'Wszystkie', hint: 'Bez odrzuconych', test: l => l.tier !== 'X' }
 };
 
 function isTop(l) { return l.tier === 'A' || l.tier === 'B'; }
-
-function loadCrm() {
-    try {
-        const saved = JSON.parse(localStorage.getItem(CRM_KEY));
-        if (saved) return saved;
-    } catch (e) { /* private window or blocked storage: start empty */ }
-    return {};
-}
-
-function saveCrm() {
-    try {
-        localStorage.setItem(CRM_KEY, JSON.stringify(crm));
-    } catch (e) {
-        alert('Nie udało się zapisać w przeglądarce. Zrób kopię CRM.');
-    }
-}
-
-// Firms ticked as contacted on the old dashboard become "Próba kontaktu"
-function migrateOldContacts() {
-    let old = {};
-    try { old = JSON.parse(localStorage.getItem('contactedFirms')) || {}; } catch (e) { return; }
-    leads.forEach(l => {
-        const id = l.source === 'KRS' ? l.source_id.replace(/^0+/, '') : l.source_id;
-        if ((old[id] || old[l.source_id]) && !crm[l.nip]) crm[l.nip] = { stage: 'Próba kontaktu', notes: '', next: '' };
-    });
-    saveCrm();
-}
-
-function stageOf(l) { return (crm[l.nip] && crm[l.nip].stage) || 'Nowy'; }
 
 function esc(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -84,10 +50,8 @@ function init(text) {
         l.search = [l.name, l.nip, l.contact_person, l.city, l.municipality, l.email].join(' ').toLowerCase();
         l.tagList = (l.all_tags || '').split('; ').filter(Boolean);
     });
-    migrateOldContacts();
     fillSelect('fVoiv', uniqueOf(l => (l.voivodeship || '').toUpperCase()));
     fillSelect('fTag', uniqueOf(l => l.tagList));
-    fillSelect('fStage', STAGES);
     const live = leads.filter(l => l.tier !== 'X').length;
     document.getElementById('dataNote').textContent = `${live.toLocaleString('pl-PL')} firm aktywnych, ${(leads.length - live).toLocaleString('pl-PL')} odrzuconych (likwidacja, upadłość, wykreślenie z VAT)`;
     apply();
@@ -119,7 +83,7 @@ function value(id) { return document.getElementById(id).value; }
 function apply() {
     const term = value('q').trim().toLowerCase();
     const voiv = value('fVoiv'), tier = value('fTier'), action = value('fAction'), tag = value('fTag'), product = value('fProduct');
-    const source = value('fSource'), stage = value('fStage'), euOnly = document.getElementById('fEu').checked;
+    const source = value('fSource'), euOnly = document.getElementById('fEu').checked;
     // an explicit "X" filter shows rejected firms; a view would otherwise hide them
     const base = tier === 'X' ? (l => l.tier === 'X') : VIEWS[activeView].test;
     filtered = leads.filter(l => base(l)
@@ -130,7 +94,6 @@ function apply() {
         && (!tag || l.tagList.includes(tag))
         && (!product || l.product === product)
         && (!source || l.source === source)
-        && (!stage || stageOf(l) === stage)
         && (!euOnly || l.eu_count > 0));
     page = 0;
     renderViews();
@@ -155,19 +118,18 @@ function renderRows() {
     page = Math.min(page, maxPage);
     const slice = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
     document.getElementById('listTitle').textContent = value('fTier') === 'X' ? 'Odrzucone' : VIEWS[activeView].title;
-    document.getElementById('listCount').textContent = `${filtered.length.toLocaleString('pl-PL')} firm, od najwyższego priorytetu`;
+    document.getElementById('listCount').textContent = `${filtered.length.toLocaleString('pl-PL')} firm, najlepiej dopasowane na górze`;
     document.getElementById('pageLabel').textContent = `Strona ${page + 1} z ${maxPage + 1}`;
     document.getElementById('prev').disabled = page === 0;
     document.getElementById('next').disabled = page >= maxPage;
     if (!slice.length) {
-        body.innerHTML = '<tr><td colspan="7" class="empty">Nic nie pasuje do tych filtrów.</td></tr>';
+        body.innerHTML = '<tr><td colspan="6" class="empty">Nic nie pasuje do tych filtrów.</td></tr>';
         return;
     }
     body.innerHTML = slice.map(l => {
-        const stage = stageOf(l);
         const tags = l.tagList.slice(0, 4).map(t => `<span class="chip">${esc(t)}</span>`).join('');
-        return `<tr data-nip="${esc(l.nip)}" class="${CLOSED_STAGES.includes(stage) && stage !== 'Wygrany' ? 'is-out' : ''}">
-            <td><div class="score"><span class="tier tier-${esc(l.tier)}">${esc(l.tier)}</span><b>${l.priority}</b></div></td>
+        return `<tr data-nip="${esc(l.nip)}">
+            <td><span class="fit fit-${esc(l.tier)}" title="Wynik ${l.priority}/100. Szczegóły na karcie firmy.">${esc(FIT_LABELS[l.tier] || l.tier)}</span></td>
             <td><div class="firm-name">${esc(l.name)}</div><div class="sub">${esc(l.city)}${l.voivodeship ? ', ' + esc(l.voivodeship.toLowerCase()) : ''} · ${esc(l.source)}</div>${tags}</td>
             <td class="stage-pill">${esc(l.product) || '<span class="sub">-</span>'}</td>
             <td>${personLabel(l)}</td>
@@ -175,7 +137,6 @@ function renderRows() {
                 ${l.email ? `<div class="sub">${esc(l.email)}</div>` : ''}
                 ${!l.phone && !l.email ? '<span class="sub">do znalezienia</span>' : ''}</td>
             <td class="col-why">${reasonChips(l)}</td>
-            <td><span class="stage-pill">${esc(stage)}</span></td>
         </tr>`;
     }).join('');
 }
@@ -187,7 +148,6 @@ function bar(label, score) {
 function openPanel(nip) {
     const l = leads.find(x => x.nip === nip);
     if (!l) return;
-    const c = crm[nip] || {};
     const people = parseJson(l.people_json);
     const projects = parseJson(l.eu_json);
     const query = encodeURIComponent(`${l.name} ${l.city}`);
@@ -232,17 +192,8 @@ function openPanel(nip) {
         </div>
 
         <div class="panel-sec">
-            <h3>Etap i notatki</h3>
-            <div class="crm-form">
-                <label>Etap<select id="crmStage">${STAGES.map(s => `<option ${s === stageOf(l) ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></label>
-                <label>Następny krok<input id="crmNext" type="date" value="${esc(c.next || '')}"></label>
-                <label class="wide">Notatki<textarea id="crmNotes" placeholder="Z kim rozmowa, jaki trak, kiedy planują zakup...">${esc(c.notes || '')}</textarea></label>
-            </div>
-        </div>
-
-        <div class="panel-sec">
-            <h3>Dlaczego ten priorytet: ${l.priority} (klasa ${esc(l.tier)})</h3>
-            <div class="bars">${bar('Dopasowanie', l.fit)}${bar('Dopasowanie skali', l.capacity)}${bar('Moment zakupu', l.timing)}${bar('Dostępność kontaktu', l.reach)}</div>
+            <h3>Skąd ta ocena: ${esc(FIT_LABELS[l.tier] || l.tier)} (${l.priority}/100)</h3>
+            <div class="bars">${bar('Odpad drzewny', l.fit)}${bar('Wielkość firmy', l.capacity)}${bar('Moment zakupu', l.timing)}${bar('Dostępność kontaktu', l.reach)}</div>
             <div style="margin-top:8px">${reasonChips(l)}</div>
         </div>
 
@@ -262,13 +213,6 @@ function openPanel(nip) {
     document.getElementById('copyNip').addEventListener('click', e => {
         navigator.clipboard.writeText(l.nip).then(() => { e.target.textContent = 'Skopiowano'; });
     });
-    const persist = () => {
-        crm[nip] = { stage: value('crmStage'), next: value('crmNext'), notes: value('crmNotes'), updated: today };
-        saveCrm();
-        renderViews();
-        renderRows();
-    };
-    ['crmStage', 'crmNext', 'crmNotes'].forEach(id => document.getElementById(id).addEventListener('change', persist));
 }
 
 function closePanel() {
@@ -291,28 +235,16 @@ function download(name, content, type) {
 }
 
 function exportList() {
-    const rows = filtered.filter(l => stageOf(l) !== 'Nie kontaktować');
-    const columns = [['Klasa', l => l.tier], ['Priorytet', l => l.priority], ['Firma', l => l.name], ['NIP', l => l.nip], ['Województwo', l => l.voivodeship],
+    const columns = [['Dopasowanie', l => FIT_LABELS[l.tier] || l.tier], ['Wynik', l => l.priority], ['Firma', l => l.name], ['NIP', l => l.nip], ['Województwo', l => l.voivodeship],
         ['Miasto', l => l.city], ['Adres', l => l.street], ['Kod', l => l.postal_code], ['Osoba', l => l.contact_person], ['Funkcja', l => l.contact_role],
         ['Telefon', l => l.phone], ['E-mail', l => l.email], ['Strona', l => l.website], ['Oferta', l => l.product], ['Profil', l => l.all_tags], ['Dlaczego', l => l.reasons],
-        ['Ostrzeżenia', l => l.warnings], ['Pierwsze zdanie', l => l.opening], ['Etap', stageOf], ['Następny krok', l => (crm[l.nip] || {}).next], ['Notatki', l => (crm[l.nip] || {}).notes]];
-    const lines = [columns.map(c => csvCell(c[0])).join(';')].concat(rows.map(l => columns.map(c => csvCell(c[1](l))).join(';')));
+        ['Ostrzeżenia', l => l.warnings], ['Pierwsze zdanie', l => l.opening]];
+    const lines = [columns.map(c => csvCell(c[0])).join(';')].concat(filtered.map(l => columns.map(c => csvCell(c[1](l))).join(';')));
     download(`lista-sprzedazowa-${today}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
 }
 
-function restoreCrm(file) {
-    file.text().then(text => {
-        const data = JSON.parse(text);
-        if (typeof data !== 'object' || Array.isArray(data) || data === null) throw new Error('format');
-        if (!confirm(`Wczytać ${Object.keys(data).length} wpisów? Wpisy o tych samych firmach zostaną nadpisane.`)) return;
-        Object.assign(crm, data);
-        saveCrm();
-        apply();
-    }).catch(() => alert('To nie jest poprawna kopia CRM.'));
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    ['q', 'fVoiv', 'fTier', 'fAction', 'fProduct', 'fTag', 'fSource', 'fStage', 'fEu'].forEach(id => {
+    ['q', 'fVoiv', 'fTier', 'fAction', 'fProduct', 'fTag', 'fSource', 'fEu'].forEach(id => {
         document.getElementById(id).addEventListener(id === 'q' ? 'input' : 'change', apply);
     });
     document.getElementById('views').addEventListener('click', e => {
@@ -330,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('prev').addEventListener('click', () => { page--; renderRows(); window.scrollTo(0, 0); });
     document.getElementById('next').addEventListener('click', () => { page++; renderRows(); window.scrollTo(0, 0); });
     document.getElementById('resetBtn').addEventListener('click', () => {
-        ['q', 'fVoiv', 'fTier', 'fAction', 'fProduct', 'fTag', 'fSource', 'fStage'].forEach(id => { document.getElementById(id).value = ''; });
+        ['q', 'fVoiv', 'fTier', 'fAction', 'fProduct', 'fTag', 'fSource'].forEach(id => { document.getElementById(id).value = ''; });
         document.getElementById('fEu').checked = false;
         activeView = 'call';
         apply();
@@ -338,8 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('panelShade').addEventListener('click', closePanel);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
     document.getElementById('exportBtn').addEventListener('click', exportList);
-    document.getElementById('backupBtn').addEventListener('click', () => download(`crm-kopia-${today}.json`, JSON.stringify(crm, null, 2), 'application/json'));
-    document.getElementById('restoreInput').addEventListener('change', e => { if (e.target.files[0]) restoreCrm(e.target.files[0]); e.target.value = ''; });
 
     if (window.top !== window) document.getElementById('backLink').hidden = true; // shown as a tab of the main dashboard
 

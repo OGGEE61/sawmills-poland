@@ -213,10 +213,50 @@ body {
     box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
 }
 
-.filters-footer {
+.filters-main {
+    grid-template-columns: 2fr repeat(4, minmax(150px, 1fr));
+}
+
+.filters-main .search-group {
+    grid-column: auto;
+    min-width: 0;
+}
+
+.filters-more {
+    margin-top: 12px;
+}
+
+.more-filters {
     margin-top: 14px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
+}
+
+.more-filters summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.more-check {
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+@media (max-width: 1000px) {
+    .filters-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filters-main .search-group {
+        grid-column: 1 / -1;
+    }
+}
+
+#yearFilterContainer {
+    margin-top: 12px;
+}
+
+.filters-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;

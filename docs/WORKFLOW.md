@@ -109,7 +109,7 @@ sh src/enrichment/refresh.sh                     # rebuild everything; run month
 venv/bin/python src/enrichment/tests_leads.py    # unit tests
 ```
 
-Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażowa" tab holds the working lists, notes, next-step dates and CSV export.
+Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażowa" tab holds the ready-made lists and CSV export.
 
 Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`. `refresh.sh` caps Google Places at 1,000 and web search at 50 lookups per run (`SEARCH_LIMIT`). Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
 
@@ -142,11 +142,11 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 
 **Which machine:** `WASTE_RULES` in `build_leads.py` maps main PKD to chipper, briquetter and typical waste. These are assumptions: correct them from real conversations.
 
-**Scoring** is hand-set rules, not trained on sales: `priority = 0.45 fit + 0.30 capacity + 0.25 timing`, where capacity means right size, not biggest. Firms sized `duża` or `mała` (`size_band`) cannot be tier A or B. `reach` is separate, so a strong firm with no phone becomes a research job. Tier X means closing or closed.
+**Scoring** is hand-set rules, not trained on sales: `priority = 0.45 fit + 0.30 capacity + 0.25 timing`, where capacity means right size, not biggest. Firms sized `duża` or `mała` (`size_band`) cannot be tier A or B. A sole trader counts as `mała` unless it has its own website, an EU project or a second address. The dashboard shows tiers as fit labels: A "Bardzo dobre", B "Dobre", C "Średnie", D "Słabe", X "Odrzucona". `reach` is separate, so a strong firm with no phone becomes a research job. Tier X means closing or closed.
 
 **Checked by hand on each firm's card, not automated:** BDO, financial statements (RDF), FSC, ARiMR. None offers a bulk route we found; RDF blocks scripts. Do not automate around that.
 
-**CRM data** (stage, notes, next step) lives in the browser's localStorage. Use "Kopia CRM" to back it up or move it; several people cannot share it yet.
+**This is a tool for finding firms, not a CRM.** Calls, stages and notes belong in Salesforce. The dashboard keeps no sales status.
 
 ## What is committed to git
 - Committed: all code, `docs/`, and the older CSVs in `data/processed/`.

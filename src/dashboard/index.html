@@ -50,11 +50,11 @@
                     <div class="stat-value" id="topRegion">-</div>
                 </div>
                 <div class="card stat-card">
-                    <div class="stat-title">Klasa A i B</div>
+                    <div class="stat-title">Bardzo dobre i dobre</div>
                     <div class="stat-value" id="topTierCount">-</div>
                 </div>
                 <div class="card stat-card">
-                    <div class="stat-title">Klasa A i B z telefonem</div>
+                    <div class="stat-title">W tym z telefonem</div>
                     <div class="stat-value" id="callableCount">-</div>
                 </div>
             </div>
@@ -92,71 +92,22 @@
                     </div>
                 </div>
 
-                <div class="filters-grid">
+                <div class="filters-grid filters-main">
                     <div class="filter-group search-group">
                         <label for="searchFilter">Wyszukaj</label>
                         <input type="text" id="searchFilter" placeholder="Nazwa firmy, NIP...">
                     </div>
-                    
+
                     <div class="filter-group">
-                        <label for="tierFilter">Klasa sprzedażowa</label>
+                        <label for="tierFilter">Dopasowanie</label>
                         <select id="tierFilter">
                             <option value="">Wszystkie</option>
-                            <option value="AB">A i B</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                            <option value="X">X (odrzucone)</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="actionFilter">Następny krok</label>
-                        <select id="actionFilter">
-                            <option value="">Każdy</option>
-                            <option>Zadzwoń</option>
-                            <option>Napisz</option>
-                            <option>Znajdź kontakt</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="productFilter">Oferta</label>
-                        <select id="productFilter">
-                            <option value="">Każda</option>
-                            <option value="Rębak + brykieciarka">Rębak + brykieciarka</option>
-                            <option value="Rębak">Rębak</option>
-                            <option value="Brykieciarka">Brykieciarka</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="wojewodztwoFilter">Województwo</label>
-                        <select id="wojewodztwoFilter">
-                            <option value="">Wszystkie</option>
-                        </select>
-                        <label class="checkbox-label" style="margin-top: 6px; font-size: 11px;">
-                            <input type="checkbox" id="hideNanRegion" checked>
-                            <span>Ukryj brakujące woj.</span>
-                        </label>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="statusFilter">Status</label>
-                        <select id="statusFilter">
-                            <option value="ALL">Wszystkie statusy</option>
-                            <option value="AKTYWNY">Aktywne</option>
-                            <option value="W LIKWIDACJI">W likwidacji</option>
-                            <option value="ZAWIESZONY">Zawieszone</option>
-                            <option value="WYKREŚLONY">Wykreślone</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="pkdFilter">PKD Główne</label>
-                        <select id="pkdFilter">
-                            <option value="">Wszystkie</option>
+                            <option value="AB">Bardzo dobre i dobre</option>
+                            <option value="A">Bardzo dobre</option>
+                            <option value="B">Dobre</option>
+                            <option value="C">Średnie</option>
+                            <option value="D">Słabe</option>
+                            <option value="X">Odrzucone (zamknięte, w likwidacji)</option>
                         </select>
                     </div>
 
@@ -174,37 +125,72 @@
                     </div>
 
                     <div class="filter-group">
-                        <label for="contactedFilter">Czy skontaktowano</label>
-                        <select id="contactedFilter">
-                            <option value="ALL">Wszystkie</option>
-                            <option value="YES">Skontaktowane</option>
-                            <option value="NO">Nie skontaktowane</option>
+                        <label for="wojewodztwoFilter">Województwo</label>
+                        <select id="wojewodztwoFilter">
+                            <option value="">Wszystkie</option>
                         </select>
                     </div>
 
                     <div class="filter-group">
-                        <label for="vatFilter">Weryfikacja VAT</label>
-                        <select id="vatFilter">
-                            <option value="ALL">Wszystkie</option>
-                            <option value="CZYNNY">Czynny podatnik VAT</option>
-                            <option value="ZWOLNIONY">Zwolniony z VAT</option>
-                            <option value="NIEZAREJESTROWANY">Niezarejestrowany</option>
-                            <option value="WYKRESLONY">Wykreślony (możliwe zamknięcie)</option>
-                            <option value="BRAK">Brak w rejestrze</option>
+                        <label for="pkdFilter">PKD główne</label>
+                        <select id="pkdFilter">
+                            <option value="">Wszystkie</option>
                         </select>
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="miastoFilter">Miasto</label>
-                        <input type="text" id="miastoFilter" placeholder="Wpisz miasto...">
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="kodFilter">Kod pocztowy</label>
-                        <input type="text" id="kodFilter" placeholder="np. 00-001">
                     </div>
                 </div>
-                
+
+                <details class="more-filters">
+                    <summary>Więcej filtrów <span id="moreFiltersCount"></span></summary>
+                    <div class="filters-grid filters-more">
+                        <div class="filter-group">
+                            <label for="miastoFilter">Miasto</label>
+                            <input type="text" id="miastoFilter" placeholder="Wpisz miasto...">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="kodFilter">Kod pocztowy</label>
+                            <input type="text" id="kodFilter" placeholder="np. 00-001">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="statusFilter">Status</label>
+                            <select id="statusFilter">
+                                <option value="ALL">Wszystkie statusy</option>
+                                <option value="AKTYWNY">Aktywne</option>
+                                <option value="W LIKWIDACJI">W likwidacji</option>
+                                <option value="ZAWIESZONY">Zawieszone</option>
+                                <option value="WYKREŚLONY">Wykreślone</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="vatFilter">Weryfikacja VAT</label>
+                            <select id="vatFilter">
+                                <option value="ALL">Wszystkie</option>
+                                <option value="CZYNNY">Czynny podatnik VAT</option>
+                                <option value="ZWOLNIONY">Zwolniony z VAT</option>
+                                <option value="NIEZAREJESTROWANY">Niezarejestrowany</option>
+                                <option value="WYKRESLONY">Wykreślony (możliwe zamknięcie)</option>
+                                <option value="BRAK">Brak w rejestrze</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="productFilter">Oferta</label>
+                            <select id="productFilter">
+                                <option value="">Każda</option>
+                                <option value="Rębak + brykieciarka">Rębak + brykieciarka</option>
+                                <option value="Rębak">Rębak</option>
+                                <option value="Brykieciarka">Brykieciarka</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label class="checkbox-label more-check">
+                        <input type="checkbox" id="hideNanRegion" checked>
+                        <span>Ukryj firmy bez województwa</span>
+                    </label>
+                </details>
+
                 <div class="filters-footer">
                     <div id="yearFilterContainer" style="display: none; align-items: center; gap: 8px;">
                         <span style="font-size: 13px; color: var(--text-muted);">Aktywny filtr roku:</span>
@@ -221,15 +207,14 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
                     <div>
                         <h3 style="margin-bottom: 2px;">Lista firm</h3>
-                        <p style="font-size: 13px; color: var(--text-muted);">💡 Kliknij wiersz firmy, aby wyświetlić pełną kartę: oferta, NIP, REGON, PKD, adres, VAT, kapitał.</p>
+                        <p style="font-size: 13px; color: var(--text-muted);">Najlepiej dopasowane na górze. Dopasowanie to nasza ocena: czy firma ma odpad drzewny, właściwą wielkość i świeże sygnały inwestycji. Kliknij wiersz, aby zobaczyć kartę firmy.</p>
                     </div>
                 </div>
                 <div class="table-container">
                     <table id="dataTable">
                         <thead>
                             <tr>
-                                <th style="text-align: center; width: 60px;" title="Oznacz jako skontaktowane">Kontakt</th>
-                                <th>Priorytet</th>
+                                <th title="Czy firma ma odpad drzewny, właściwą wielkość i świeże sygnały inwestycji">Dopasowanie</th>
                                 <th>Firma</th>
                                 <th>Do kogo</th>
                                 <th>Telefon</th>
