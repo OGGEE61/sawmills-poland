@@ -1,4 +1,32 @@
-# Project status — 2026-10-19 (end of day)
+# Project status — 2026-11-02
+
+**Goal:** sell wood chippers and briquette machines to Polish firms with wood waste. Run and refresh: `docs/WORKFLOW.md`, Step 4. Nothing below the line has been re-checked since 2026-10-19.
+
+| Live firms (6,370) | Phone | Email | Website | Full contact name | Role only |
+|---|---|---|---|---|---|
+| KRS (1,873) | 82 | 285 | 146 | 117 | ~1,700 |
+| CEIDG (4,497) | 731 | 784 | 99 | 4,497 | - |
+
+- Target: 0.5-2 t/h machines, Weima sub-brand for the smallest clients. 160 big firms and 149 very small ones are kept out of tiers A and B.
+- Tiers: A 59, B 854, C 3466, D 1991, X 664 (closing or closed). Of A+B: 185 have a phone, 88 email only, 640 need research.
+- EU projects, right-sized firms: 25 have a recent waste/biomass/GOZ project, 11 a recent machinery project.
+- Wider market: only 300 of the candidates are verified so far; 21 kept (7%). `expand_market.py verify` is resumable.
+
+**Known limits**
+- Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
+- Project type is keyword-based; EU matches are by name (no NIP in the lists).
+- Waste volume is not known for any firm: PKD and website words are stand-ins.
+- KRS API masks names. For most companies we know the role and initials only.
+- Financial statements (RDF) return 403 from bot protection to scripts. Not worked around; no revenue or headcount.
+- By hand on each firm's card, not automated: BDO, RDF, FSC, ARiMR. Skipped: job ads, the e-drewno buyer list (unverified that it exists), PEFC, dane.gov.pl farm-beneficiary list (dead 2017 link).
+- Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
+- GUS: tested on its test server only, which anonymises sole traders. Places and Serper: tested on stubs only.
+
+**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token; GUS key; optionally Serper and Places keys; fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+
+---
+
+# Earlier status — 2026-10-19 (end of day)
 
 See also `docs/WORKFLOW.md` for how data flows from fetch to dashboard.
 

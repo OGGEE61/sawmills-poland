@@ -1,4 +1,6 @@
-# CEIDG & KRS Sawmills Data Sourcing & Dashboard
+# Wood-waste firms in Poland: data and sales dashboard
+
+Finds and ranks Polish firms with wood waste as buyers of wood chippers and briquette machines. **To run the sales list, see [docs/WORKFLOW.md](docs/WORKFLOW.md) (Step 4); status and limits are in [docs/STATUS.md](docs/STATUS.md).**
 
 This project provides tools to fetch, process, and visualize data about active sawmills (tartaki) from both the Polish CEIDG (Osoby fizyczne) API v3 and the official KRS (Spółki) via custom scraper.
 

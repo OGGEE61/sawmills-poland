@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista sprzedażowa - tartaki</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🪵</text></svg>'>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="leads.css">
+</head>
+<body>
+    <header class="leads-top">
+        <div>
+            <h1>Lista <span class="highlight">sprzedażowa</span></h1>
+            <p id="dataNote">Ładowanie danych...</p>
+        </div>
+        <nav class="leads-nav">
+            <button id="exportBtn" class="btn btn-secondary btn-sm">Eksport listy (CSV)</button>
+            <button id="backupBtn" class="btn btn-secondary btn-sm">Kopia CRM</button>
+            <label class="btn btn-secondary btn-sm" for="restoreInput">Wczytaj CRM</label>
+            <input id="restoreInput" type="file" accept="application/json" hidden>
+            <a id="backLink" class="btn btn-secondary btn-sm" href="index.html" target="_top">Mapa i rejestry</a>
+        </nav>
+    </header>
+
+    <main class="leads-main">
+        <section id="views" class="view-grid" aria-label="Gotowe widoki"></section>
+
+        <section class="card leads-filters" aria-label="Filtry">
+            <input id="q" type="search" placeholder="Firma, NIP, osoba, miasto..." aria-label="Szukaj">
+            <select id="fVoiv" aria-label="Województwo"><option value="">Wszystkie województwa</option></select>
+            <select id="fTier" aria-label="Klasa">
+                <option value="">Klasy A-D</option>
+                <option value="A">Klasa A</option>
+                <option value="B">Klasa B</option>
+                <option value="C">Klasa C</option>
+                <option value="D">Klasa D</option>
+                <option value="X">Odrzucone (X)</option>
+            </select>
+            <select id="fAction" aria-label="Następny krok">
+                <option value="">Każdy kanał</option>
+                <option>Zadzwoń</option>
+                <option>Napisz</option>
+                <option>Znajdź kontakt</option>
+            </select>
+            <select id="fProduct" aria-label="Maszyna">
+                <option value="">Każda maszyna</option>
+                <option value="Rębak + brykieciarka">Rębak + brykieciarka</option>
+                <option value="Rębak">Rębak</option>
+                <option value="Brykieciarka">Brykieciarka</option>
+            </select>
+            <select id="fTag" aria-label="Profil"><option value="">Każdy profil</option></select>
+            <select id="fSource" aria-label="Rejestr">
+                <option value="">KRS i CEIDG</option>
+                <option value="KRS">KRS (spółki)</option>
+                <option value="CEIDG">CEIDG (JDG)</option>
+            </select>
+            <select id="fStage" aria-label="Etap"><option value="">Każdy etap</option></select>
+            <label class="check"><input id="fEu" type="checkbox"> Tylko z projektem UE</label>
+            <button id="resetBtn" class="btn btn-secondary btn-sm">Wyczyść</button>
+        </section>
+
+        <section class="card">
+            <div class="list-head">
+                <h3 id="listTitle">Firmy</h3>
+                <span id="listCount" class="muted"></span>
+            </div>
+            <div class="table-container">
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Priorytet</th>
+                            <th>Firma</th>
+                            <th>Oferta</th>
+                            <th>Do kogo</th>
+                            <th>Kontakt</th>
+                            <th>Dlaczego</th>
+                            <th>Etap</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <button id="prev" class="btn btn-icon" aria-label="Poprzednia strona">&larr;</button>
+                <span id="pageLabel" class="muted"></span>
+                <button id="next" class="btn btn-icon" aria-label="Następna strona">&rarr;</button>
+            </div>
+        </section>
+
+        <p class="muted method">
+            Priorytet to ręcznie ustawione reguły (45% odpad drzewny, 30% właściwa skala firmy, 25% moment zakupu), nie model nauczony na sprzedaży.
+            Dopasowanie projektów UE idzie po nazwie firmy, bo lista nie zawiera NIP. Dane osobowe: przed kontaktem sprawdź zasady RODO i oznaczaj sprzeciw etapem „Nie kontaktować”.
+        </p>
+    </main>
+
+    <div id="panelShade" class="panel-shade" hidden></div>
+    <aside id="panel" class="lead-panel" hidden aria-label="Karta firmy"></aside>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="leads.js"></script>
+</body>
+</html>

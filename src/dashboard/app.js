@@ -4,6 +4,58 @@ let currentPage = 1;
 let rowsPerPage = 50;
 
 let contactedFirms = JSON.parse(localStorage.getItem('contactedFirms')) || {};
+const CRM_KEY = 'leadCrm'; // shared with leads.js
+let leadCrm = readLeadCrm();
+
+function readLeadCrm() {
+    try {
+        return JSON.parse(localStorage.getItem(CRM_KEY)) || {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function isContactedRow(row, id) {
+    const stage = row.LEAD && leadCrm[row.LEAD.nip] && leadCrm[row.LEAD.nip].stage;
+    return !!contactedFirms[id] || (!!stage && stage !== 'Nowy');
+}
+
+// The checkbox and the sales list's stage are one status
+function setContacted(id, nip, checked) {
+    if (checked) contactedFirms[id] = true;
+    else delete contactedFirms[id];
+    localStorage.setItem('contactedFirms', JSON.stringify(contactedFirms));
+    if (!nip) return;
+    leadCrm = readLeadCrm();
+    const entry = leadCrm[nip] || { notes: '', next: '' };
+    const stage = entry.stage || 'Nowy';
+    if (checked && stage === 'Nowy') entry.stage = 'Próba kontaktu';
+    if (!checked && stage === 'Próba kontaktu') entry.stage = 'Nowy';
+    leadCrm[nip] = entry;
+    localStorage.setItem(CRM_KEY, JSON.stringify(leadCrm));
+}
+
+function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function matchesTier(row, tierVal) {
+    const tier = row.LEAD ? row.LEAD.tier : '';
+    return !tierVal || (tierVal === 'AB' ? (tier === 'A' || tier === 'B') : tier === tierVal);
+}
+
+// Cleaned and website-found contacts win over the raw register fields
+function contactOf(row, leadField, rawField) {
+    if (row.LEAD && row.LEAD[leadField]) return row.LEAD[leadField];
+    return row[rawField] && row[rawField] !== 'nan' ? row[rawField] : '-';
+}
+
+function personHtml(lead) {
+    if (!lead) return '-';
+    if (lead.contact_person) return `<strong>${esc(lead.contact_person)}</strong><br><small style="color: var(--text-muted);">${esc(lead.contact_role)}</small>`;
+    if (lead.contact_role) return `${esc(lead.contact_role)}${lead.contact_initials ? `<br><small style="color: var(--text-muted);">${esc(lead.contact_initials)}</small>` : ''}`;
+    return '-';
+}
 
 // Chart instances
 let regionChartInst = null;
@@ -18,6 +70,9 @@ const kodFilter = document.getElementById('kodFilter');
 const searchFilter = document.getElementById('searchFilter');
 const contactedFilter = document.getElementById('contactedFilter');
 const vatFilter = document.getElementById('vatFilter');
+const tierFilter = document.getElementById('tierFilter');
+const actionFilter = document.getElementById('actionFilter');
+const productFilter = document.getElementById('productFilter');
 const pkdFilter = document.getElementById('pkdFilter');
 const hideNanRegion = document.getElementById('hideNanRegion');
 const resetFilters = document.getElementById('resetFilters');
@@ -75,6 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
     hideNanRegion.addEventListener('change', applyFilters);
     contactedFilter.addEventListener('change', applyFilters);
     vatFilter.addEventListener('change', applyFilters);
+    tierFilter.addEventListener('change', applyFilters);
+    actionFilter.addEventListener('change', applyFilters);
+    productFilter.addEventListener('change', applyFilters);
+    document.querySelectorAll('.page-tab').forEach(btn => btn.addEventListener('click', () => showPage(btn.dataset.page)));
     pkdFilter.addEventListener('change', applyFilters);
     miastoFilter.addEventListener('input', applyFilters);
     kodFilter.addEventListener('input', applyFilters);
@@ -110,6 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
         searchFilter.value = '';
         contactedFilter.value = 'ALL';
         vatFilter.value = 'ALL';
+        tierFilter.value = '';
+        actionFilter.value = '';
+        productFilter.value = '';
         pkdFilter.value = '';
         selectedYearFilter = null;
         updateYearFilterUI();
@@ -189,8 +251,9 @@ function loadData() {
     Promise.all([
         fetch('../../data/processed/tartaki_ceidg.csv').then(res => res.ok ? res.text() : null).catch(() => null),
         fetch('../../data/processed/tartaki_full.csv').then(res => res.ok ? res.text() : null).catch(() => null),
-        fetch('../../data/processed/verification.csv').then(res => res.ok ? res.text() : null).catch(() => null)
-    ]).then(([ceidgText, krsText, verifText]) => {
+        fetch('../../data/processed/verification.csv').then(res => res.ok ? res.text() : null).catch(() => null),
+        fetch('../../data/processed/leads.csv').then(res => res.ok ? res.text() : null).catch(() => null)
+    ]).then(([ceidgText, krsText, verifText, leadsText]) => {
         let tempData = [];
         
         if (ceidgText) {
@@ -204,8 +267,8 @@ function loadData() {
             parsed.data.forEach(row => { 
                 row['REJESTR'] = "KRS"; 
                 row['NAZWA'] = row['name'];
-                row['NIP'] = row['nip'];
-                row['REGON'] = row['regon'];
+                row['NIP'] = (row['nip'] || '').split('.')[0];
+                row['REGON'] = (row['regon'] || '').split('.')[0];
                 
                 let status = 'WYKREŚLONY';
                 if(row['status_from_discovery'] === 'ACTIVE') status = 'AKTYWNY';
@@ -234,10 +297,26 @@ function loadData() {
         if (verifText) {
             Papa.parse(verifText, { header: true, skipEmptyLines: true }).data.forEach(v => { verification[v.nip] = v; });
         }
+        const leadsByNip = {};
+        if (leadsText) {
+            Papa.parse(leadsText, { header: true, skipEmptyLines: true }).data.forEach(l => { leadsByNip[l.nip] = l; });
+        }
         tempData.forEach(row => {
             const raw = row['detail.wlasciciel.nip'] || row['NIP'] || '';
             const nip = raw.split('.')[0].replace(/\D/g, '').padStart(10, '0');
             row.VER = verification[nip] || null;
+            row.LEAD = leadsByNip[nip] || null;
+            if (row.LEAD) row.LEAD.onDashboard = true;
+        });
+        // Firms found beyond the 16.10 registers exist only in leads.csv
+        Object.values(leadsByNip).filter(l => !l.onDashboard).forEach(l => {
+            tempData.push({
+                LEAD: l, VER: verification[l.nip] || null, REJESTR: l.source, NAZWA: l.name, NIP: l.nip, CEIDG_ID: l.source_id, krs: l.source_id,
+                STATUS: l.status, PKD_GLOWNE_KOD: l.main_pkd, legal_form: l.legal_form, 'detail.dataRozpoczecia': l.started,
+                'detail.adresDzialalnosci.wojewodztwo': l.voivodeship, 'detail.adresDzialalnosci.powiat': l.county,
+                'detail.adresDzialalnosci.gmina': l.municipality, 'detail.adresDzialalnosci.miasto': l.city,
+                'detail.adresDzialalnosci.ulica': l.street, 'detail.adresDzialalnosci.kod': l.postal_code
+            });
         });
 
         allData = tempData;
@@ -309,6 +388,8 @@ function applyFilters() {
     const term = searchFilter.value.toLowerCase();
     const cFilter = contactedFilter.value;
     const vFilter = vatFilter.value;
+    const tierVal = tierFilter.value;
+    const actionVal = actionFilter.value;
     const rFilter = currentRejestrTab;
     const pkdVal = pkdFilter.value.toLowerCase();
     const hideNan = hideNanRegion.checked;
@@ -336,12 +417,14 @@ function applyFilters() {
         
         const matchRejestr = rFilter === 'ALL' || rejestr === rFilter;
         
-        const isContacted = !!contactedFirms[ceidgId];
+        const isContacted = isContactedRow(row, ceidgId);
         const matchContacted = cFilter === 'ALL' || (cFilter === 'YES' && isContacted) || (cFilter === 'NO' && !isContacted);
         const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
+        const matchLead = matchesTier(row, tierVal) && (!actionVal || (row.LEAD && row.LEAD.action === actionVal)) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
         
-        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchYear && matchVat;
+        return matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchYear && matchVat && matchLead;
     });
+    filteredData.sort((a, b) => (b.LEAD ? Number(b.LEAD.priority) : -1) - (a.LEAD ? Number(a.LEAD.priority) : -1));
     
     currentPage = 1;
     updateDashboard();
@@ -373,6 +456,10 @@ function updateTopRegion() {
     }
     
     topRegionLabel.textContent = top;
+
+    const topTier = filteredData.filter(row => row.LEAD && (row.LEAD.tier === 'A' || row.LEAD.tier === 'B'));
+    document.getElementById('topTierCount').textContent = topTier.length.toLocaleString('pl-PL');
+    document.getElementById('callableCount').textContent = topTier.filter(row => row.LEAD.phone).length.toLocaleString('pl-PL');
 }
 
 function renderTable() {
@@ -397,9 +484,9 @@ function renderTable() {
         const budynek = (row['detail.adresDzialalnosci.budynek'] && row['detail.adresDzialalnosci.budynek'] !== 'nan') ? row['detail.adresDzialalnosci.budynek'] : (row['building_no'] || '');
         const lokal = (row['detail.adresDzialalnosci.lokal'] && row['detail.adresDzialalnosci.lokal'] !== 'nan') ? row['detail.adresDzialalnosci.lokal'] : (row['unit_no'] || '');
         const kod = row['detail.adresDzialalnosci.kod'] || row['postal_code'] || '-';
-        const email = row['EMAIL'] && row['EMAIL'] !== 'nan' ? row['EMAIL'] : '-';
-        const telefon = row['TELEFON'] && row['TELEFON'] !== 'nan' ? row['TELEFON'] : '-';
-        const www = row['WWW'] && row['WWW'] !== 'nan' ? row['WWW'] : '-';
+        const email = contactOf(row, 'email', 'EMAIL');
+        const telefon = contactOf(row, 'phone', 'TELEFON');
+        const www = contactOf(row, 'website', 'WWW');
         const status = row['STATUS'] || '-';
         const dataRozp = row['detail.dataRozpoczecia'] || row['registration_date'] || '-';
 
@@ -414,7 +501,7 @@ function renderTable() {
         }
         
         const ceidgId = row['CEIDG_ID'] || row['id'] || nip;
-        const isContacted = !!contactedFirms[ceidgId];
+        const isContacted = isContactedRow(row, ceidgId);
         const rejestr = (row['REJESTR'] || 'CEIDG').toUpperCase();
         const rejestrBadgeClass = rejestr === 'KRS' ? 'badge-rejestr-krs' : 'badge-rejestr-ceidg';
         const statusBadgeClass = status === 'AKTYWNY' ? 'badge-active' : (status === 'W LIKWIDACJI' ? 'badge-liquidation' : (status === 'ZAWIESZONY' ? 'badge-suspended' : 'badge-deleted'));
@@ -430,8 +517,11 @@ function renderTable() {
         const verBadge = ver ? `<span class="badge ${VER_BADGES[ver][0]}">${VER_BADGES[ver][1]}</span>` : '-';
 
         tr.innerHTML = `
-            <td style="text-align: center;"><input type="checkbox" class="contact-checkbox" data-id="${ceidgId}" ${isContacted ? 'checked' : ''} title="Oznacz jako skontaktowane"></td>
+            <td style="text-align: center;"><input type="checkbox" class="contact-checkbox" data-id="${ceidgId}" data-nip="${esc(row.LEAD ? row.LEAD.nip : '')}" ${isContacted ? 'checked' : ''} title="Oznacz jako skontaktowane"></td>
+            <td>${row.LEAD ? `<div class="score"><span class="tier tier-${esc(row.LEAD.tier)}">${esc(row.LEAD.tier)}</span><b>${esc(row.LEAD.priority)}</b></div>` : '-'}</td>
             <td class="col-nazwa"><strong>${nazwa}</strong></td>
+            <td>${row.LEAD ? esc(row.LEAD.product) || '-' : '-'}</td>
+            <td>${personHtml(row.LEAD)}</td>
             <td>${nip}</td>
             <td>${regon}</td>
             <td>${pkdLabel}</td>
@@ -439,9 +529,9 @@ function renderTable() {
             <td>${woj}</td>
             <td>${fullAdres}</td>
             <td>${kod}</td>
-            <td>${email}</td>
-            <td>${telefon}</td>
-            <td>${www}</td>
+            <td>${esc(email)}</td>
+            <td>${telefon !== '-' ? `<a class="phone" href="tel:${esc(telefon.replace(/\s/g, ''))}">${esc(telefon)}</a>` : '-'}</td>
+            <td>${esc(www)}</td>
             <td><span class="badge ${statusBadgeClass}">${status}</span></td>
             <td>${verBadge}</td>
             <td>${dataRozp}</td>
@@ -473,13 +563,7 @@ function renderTable() {
             e.stopPropagation();
         });
         cb.addEventListener('change', (e) => {
-            const id = e.target.getAttribute('data-id');
-            if (e.target.checked) {
-                contactedFirms[id] = true;
-            } else {
-                delete contactedFirms[id];
-            }
-            localStorage.setItem('contactedFirms', JSON.stringify(contactedFirms));
+            setContacted(e.target.getAttribute('data-id'), e.target.getAttribute('data-nip'), e.target.checked);
         });
     });
 }
@@ -528,11 +612,11 @@ function openCompanyModal(row) {
     if (ulica) adresWiersz = `${ulica} ${nrDomu}${nrLokalu ? '/' + nrLokalu : ''}, ${kodPoczt} ${miasto}`;
 
     // Contact
-    const email = row['EMAIL'] && row['EMAIL'] !== 'nan' ? row['EMAIL'] : '-';
-    const telefon = row['TELEFON'] && row['TELEFON'] !== 'nan' ? row['TELEFON'] : '-';
-    const www = row['WWW'] && row['WWW'] !== 'nan' ? row['WWW'] : '-';
+    const email = contactOf(row, 'email', 'EMAIL');
+    const telefon = contactOf(row, 'phone', 'TELEFON');
+    const www = contactOf(row, 'website', 'WWW');
     const ceidgId = row['CEIDG_ID'] || row['id'] || nip;
-    const isContacted = !!contactedFirms[ceidgId];
+    const isContacted = isContactedRow(row, ceidgId);
 
     // PKD
     const pkdMain = row['PKD_GLOWNE_KOD'] || row['pkd_main'] || '-';
@@ -557,6 +641,8 @@ function openCompanyModal(row) {
     }
 
     modalBody.innerHTML = `
+        ${salesSectionHtml(row)}
+
         <!-- Identyfikacja i Podstawowe dane -->
         <div class="modal-section">
             <div class="modal-section-title">🏢 Identyfikacja Podmiotu</div>
@@ -662,20 +748,20 @@ function openCompanyModal(row) {
             <div class="modal-grid-2">
                 <div class="modal-detail-item">
                     <span class="detail-label">Telefon</span>
-                    <span class="detail-value">${telefon !== '-' ? `<a href="tel:${telefon}" style="color: inherit;">${telefon}</a>` : '-'}</span>
+                    <span class="detail-value">${telefon !== '-' ? `<a href="tel:${esc(telefon.replace(/\s/g, ''))}" style="color: inherit;">${esc(telefon)}</a>` : '-'}</span>
                 </div>
                 <div class="modal-detail-item">
                     <span class="detail-label">E-mail</span>
-                    <span class="detail-value">${email !== '-' ? `<a href="mailto:${email}" style="color: var(--accent); font-weight: 600;">${email}</a>` : '-'}</span>
+                    <span class="detail-value">${email !== '-' ? `<a href="mailto:${esc(email)}" style="color: var(--accent); font-weight: 600;">${esc(email)}</a>` : '-'}</span>
                 </div>
                 <div class="modal-detail-item">
                     <span class="detail-label">Strona WWW</span>
-                    <span class="detail-value">${www !== '-' ? `<a href="${www.startsWith('http') ? www : 'http://' + www}" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">${www}</a>` : '-'}</span>
+                    <span class="detail-value">${www !== '-' ? `<a href="${esc(/^https?:\/\//i.test(www) ? www : 'http://' + www)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent);">${esc(www)}</a>` : '-'}</span>
                 </div>
                 <div class="modal-detail-item">
                     <span class="detail-label">Status kontaktu</span>
                     <label style="display: flex; align-items: center; gap: 8px; margin-top: 4px; cursor: pointer;">
-                        <input type="checkbox" id="modalContactCheckbox" data-id="${ceidgId}" ${isContacted ? 'checked' : ''} class="contact-checkbox">
+                        <input type="checkbox" id="modalContactCheckbox" data-id="${ceidgId}" data-nip="${esc(row.LEAD ? row.LEAD.nip : '')}" ${isContacted ? 'checked' : ''} class="contact-checkbox">
                         <span style="font-weight: 600; color: ${isContacted ? 'var(--success)' : 'var(--text-muted)'};">
                             ${isContacted ? '✓ Oznaczono jako skontaktowane' : 'Oznacz jako skontaktowane'}
                         </span>
@@ -688,17 +774,20 @@ function openCompanyModal(row) {
 
     modal.style.display = 'flex';
 
+    const leadLink = modalBody.querySelector('[data-open-lead]');
+    if (leadLink) {
+        leadLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeCompanyModal();
+            showPage('sales', leadLink.dataset.openLead);
+        });
+    }
+
     // Hook up modal contact checkbox
     const modalCb = document.getElementById('modalContactCheckbox');
     if (modalCb) {
         modalCb.addEventListener('change', (e) => {
-            const id = e.target.getAttribute('data-id');
-            if (e.target.checked) {
-                contactedFirms[id] = true;
-            } else {
-                delete contactedFirms[id];
-            }
-            localStorage.setItem('contactedFirms', JSON.stringify(contactedFirms));
+            setContacted(e.target.getAttribute('data-id'), e.target.getAttribute('data-nip'), e.target.checked);
             renderTable(); // Update checkbox in table
         });
     }
@@ -775,6 +864,8 @@ function renderCharts() {
     const term = searchFilter.value.toLowerCase();
     const cFilter = contactedFilter.value;
     const vFilter = vatFilter.value;
+    const tierVal = tierFilter.value;
+    const actionVal = actionFilter.value;
     const rFilter = currentRejestrTab;
     const pkdVal = pkdFilter.value.toLowerCase();
     const hideNan = hideNanRegion.checked;
@@ -799,11 +890,12 @@ function renderCharts() {
         const matchNan = !hideNan || (woj !== 'nan' && woj !== '');
         const matchPkd = !pkdVal || rowPkd === pkdVal;
         const matchRejestr = rFilter === 'ALL' || rejestr === rFilter;
-        const isContacted = !!contactedFirms[ceidgId];
+        const isContacted = isContactedRow(row, ceidgId);
         const matchContacted = cFilter === 'ALL' || (cFilter === 'YES' && isContacted) || (cFilter === 'NO' && !isContacted);
         const matchVat = vFilter === 'ALL' || verificationOf(row) === vFilter;
+        const matchLead = matchesTier(row, tierVal) && (!actionVal || (row.LEAD && row.LEAD.action === actionVal)) && (!productFilter.value || (row.LEAD && row.LEAD.product === productFilter.value));
         
-        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchVat) {
+        if (matchWoj && matchStat && matchMiasto && matchKod && matchSearch && matchNan && matchContacted && matchPkd && matchRejestr && matchVat && matchLead) {
             const y = extractYear(row['detail.dataRozpoczecia']);
             if (y) {
                 yearCounts[y] = (yearCounts[y] || 0) + 1;
@@ -962,6 +1054,45 @@ function getTitleText(d, regionCounts) {
 }
 
 
+
+function showPage(page, nip) {
+    const frame = document.getElementById('salesFrame');
+    const sales = page === 'sales';
+    if (sales && (!frame.getAttribute('src') || nip)) frame.src = 'leads.html' + (nip ? '#' + nip : '');
+    if (sales && nip && frame.contentWindow && frame.contentWindow.openPanel) frame.contentWindow.openPanel(nip);
+    frame.hidden = !sales;
+    document.querySelector('.main-content').hidden = sales;
+    document.querySelectorAll('.page-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.page === page));
+    if (!sales) { // stages may have changed on the sales list
+        leadCrm = readLeadCrm();
+        applyFilters();
+    }
+}
+
+function salesSectionHtml(row) {
+    const l = row.LEAD;
+    if (!l) return '';
+    const stage = (leadCrm[l.nip] && leadCrm[l.nip].stage) || 'Nowy';
+    const chips = (text, cls) => (text || '').split('; ').filter(Boolean).map(t => `<span class="chip ${cls}">${esc(t)}</span>`).join('');
+    return `
+        <div class="modal-section">
+            <div class="modal-section-title">🎯 Sprzedaż: klasa ${esc(l.tier)}, priorytet ${esc(l.priority)}, etap: ${esc(stage)}</div>
+            <div class="opening"><small>Oferta: ${esc(l.product || 'do ustalenia')}. Pierwsze zdanie do rozmowy:</small>${esc(l.opening)}</div>
+            <div class="modal-grid-2" style="margin-top: 12px;">
+                <div class="modal-detail-item">
+                    <span class="detail-label">Do kogo</span>
+                    <span class="detail-value">${personHtml(l)}</span>
+                </div>
+                <div class="modal-detail-item">
+                    <span class="detail-label">Następny krok</span>
+                    <span class="detail-value">${esc(l.action)}</span>
+                </div>
+            </div>
+            <div style="margin-top: 10px;">${chips(l.reasons, '')}${chips(l.warnings, 'chip-warn')}${chips(l.blockers, 'chip-warn')}${chips(l.all_tags, '')}</div>
+            <div style="margin-top: 10px;"><a href="leads.html#${esc(l.nip)}" data-open-lead="${esc(l.nip)}" style="color: var(--accent); font-weight: 600; text-decoration: underline;">Pełna karta: ludzie, projekty UE, notatki i termin &rarr;</a></div>
+        </div>
+    `;
+}
 
 function verificationSectionHtml(row) {
     const v = row.VER;

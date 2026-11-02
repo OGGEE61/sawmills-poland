@@ -97,10 +97,46 @@ venv/bin/python src/enrichment/merge_verification.py    # -> verification.csv
 It loads `tartaki_ceidg.csv`, `tartaki_full.csv` and `verification.csv`, and matches rows by NIP.
 Without `verification.csv` it still works; the VAT column and filter are just empty.
 
+## Step 4: Sales list (wood chippers and briquette machines)
+
+The machines do 0.5-2 t/h and are a Weima sub-brand for the smallest clients, so the buyer is a small or mid-sized firm with wood waste. Big plants score low and are listed separately for the main line. Run everything from the repo root:
+
+```
+venv/bin/python -m pip install -r src/enrichment/requirements.txt
+sh src/enrichment/refresh.sh                     # rebuild everything; run monthly. Optional sources run if their key is set
+venv/bin/python src/enrichment/tests_leads.py    # unit tests
+```
+
+Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażowa" tab holds the working lists, notes, next-step dates and CSV export.
+
+To widen the market beyond 16.10/16.11 (slow, resumable, stop any time):
+
+```
+venv/bin/python src/enrichment/expand_market.py discover   # list KRS companies with wood PKD codes
+venv/bin/python src/enrichment/expand_market.py verify     # keep active firms whose MAIN activity fits; about 2 extracts/s at most
+sh src/enrichment/refresh.sh                               # merge what was found
+```
+
+| Source | Script | Gives | Needs |
+|---|---|---|---|
+| Raw KRS extracts | `extract_krs_signals.py` | email, website, roles, shareholders, filings, arrears, bankruptcy | nothing |
+| EU project lists | `fetch_eu_projects.py` | projects by type (waste/biomass first). Matched by name, no NIP | nothing |
+| Firm websites | `crawl_websites.py` | phones, emails, waste/heat/machine keywords, names fitting KRS masks | nothing |
+| Wider market | `expand_market.py` | pallets, joinery, flooring, furniture, forestry companies | nothing. Sole traders outside 16.10 need a new CEIDG run with a token |
+| GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested on GUS's test server |
+| Google Maps | `google_places.py` | phone, website, Maps link | `GOOGLE_PLACES_KEY` (billed). Tested on a stub only |
+| Web search | `web_search.py` | websites, contact snippets | `SERPER_API_KEY` (billed). Tested on a stub only |
+
+**Which machine:** `WASTE_RULES` in `build_leads.py` maps main PKD to chipper, briquetter and typical waste. These are assumptions: correct them from real conversations.
+
+**Scoring** is hand-set rules, not trained on sales: `priority = 0.45 fit + 0.30 capacity + 0.25 timing`, where capacity means right size, not biggest. Firms sized `duża` or `mała` (`size_band`) cannot be tier A or B. `reach` is separate, so a strong firm with no phone becomes a research job. Tier X means closing or closed.
+
+**Checked by hand on each firm's card, not automated:** BDO, financial statements (RDF), FSC, ARiMR. None offers a bulk route we found; RDF blocks scripts. Do not automate around that.
+
+**CRM data** (stage, notes, next step) lives in the browser's localStorage. Use "Kopia CRM" to back it up or move it; several people cannot share it yet.
+
 ## What is committed to git
 - Committed: all code, `docs/`, and the older CSVs in `data/processed/`.
-- **Not committed yet:** `master.csv`, `enrichment_bialalista.csv`, `verification.csv`. They contain board-member names; decide before pushing to a public repo. The dashboard's VAT features need `verification.csv`.
+- **Not committed yet:** `master.csv`, `enrichment_bialalista.csv`, `verification.csv`. They contain board-member names; decide before pushing to a public repo. The dashboard's VAT features need `verification.csv`. `.gitignore` allows `data/processed/*.csv`, so `git add .` **would** add these three.
+- **Git-ignored on purpose:** `leads.csv`, `krs_signals.csv`, `eu_projects.csv`, `website_contacts.csv`, `expansion_*.csv`, `gus.csv`, `places.csv`, `data/raw/external/`. They hold names and contacts, and the Cloudflare build publishes every committed CSV, so the public site shows a "missing file" note on the sales list.
 - Never committed (ignored): `data/raw/`, `*.json`, `*.jsonl`.
-
-## Still missing: contact details (phone / email / website)
-Only ~15% of CEIDG firms and 0% of KRS firms have a phone. Plan: a search API (Serper/SerpAPI) driven by `src/enrichment/web_search.py`, and the GUS REGON key. See `docs/STATUS.md`.

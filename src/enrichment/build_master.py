@@ -38,7 +38,22 @@ def main():
         "voivodeship": ceidg["detail.adresDzialalnosci.wojewodztwo"],
     })
 
-    master = pd.concat([krs_m, ceidg_m], ignore_index=True)
+    frames = [krs_m, ceidg_m]
+    expansion_path = PROCESSED / "expansion_firms.csv"
+    if expansion_path.exists():
+        more = pd.read_csv(expansion_path, dtype=str)
+        frames.append(pd.DataFrame({
+            "source": "KRS",
+            "source_id": more["krs"],
+            "name": more["name"],
+            "nip": more["nip"].map(clean_nip),
+            "regon": more["regon"],
+            "city": more["city"],
+            "postal_code": more["postal_code"],
+            "voivodeship": more["voivodeship"],
+        }))
+
+    master = pd.concat(frames, ignore_index=True)
     master.to_csv(PROCESSED / "master.csv", index=False, encoding="utf-8")
     dup = master["nip"].dropna().duplicated().sum()
     print(f"{len(master)} rows, {master['nip'].notna().sum()} with NIP, "

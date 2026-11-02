@@ -19,3 +19,13 @@ ceidg_state.json
 # IDE
 .vscode/
 .idea/
+
+# Downloaded source files and lead data (names and contacts of people: keep local)
+data/raw/external/
+data/processed/krs_signals.csv
+data/processed/eu_projects.csv
+data/processed/website_contacts.csv
+data/processed/leads.csv
+data/processed/expansion_*.csv
+data/processed/gus.csv
+data/processed/places.csv
