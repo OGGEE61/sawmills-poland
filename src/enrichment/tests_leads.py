@@ -1,9 +1,13 @@
 """Run from the repo root: venv/bin/python src/enrichment/tests_leads.py"""
 import unittest
 
+import pandas as pd
+
 from build_leads import blockers, pair_in_words, product_for, resolve_name, role_rank, size_band
 from contacts import clean_email, clean_phone, clean_site, email_domain, mask_fits
 from fetch_eu_projects import classify, core_of, normalize
+from crawl_websites import name_in_domain
+from web_search import extract, select_firms
 
 
 class Contacts(unittest.TestCase):
@@ -71,6 +75,37 @@ class Product(unittest.TestCase):
         self.assertEqual(offer("02.20.Z"), "Rębak")
         self.assertEqual(offer("16.22.Z", "suszarnia"), "Rębak + brykieciarka")
         self.assertEqual(offer("41.20.Z", "", 10), "")
+
+
+class SearchResults(unittest.TestCase):
+    def test_contacts_only_from_results_about_this_firm(self):
+        other = {"url": "https://www.gowork.pl/x", "text": "Tartak Rawicz tel. 501 234 567 biuro@rawicz.pl"}
+        mine = {"url": "https://www.krs-online.com.pl/y", "text": "Powidzka Sp. NIP 7551004144 tel. 602 111 222"}
+        found = extract([other, mine], "POWIDZKA SPÓŁKA JAWNA", "7551004144")
+        self.assertEqual(found["phones"], ["602111222"])
+        self.assertEqual(found["emails"], [])
+
+    def test_directory_is_not_the_firms_site(self):
+        self.assertFalse(name_in_domain("TARTAK BYDGOSZCZ SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", "aplikuj.pl"))
+        self.assertTrue(name_in_domain("GAMBEX GOŁĄBEK SPÓŁKA KOMANDYTOWA", "gambex.pl"))
+
+    def test_regon_is_not_a_phone(self):
+        found = extract([{"url": "https://a.pl", "text": "NIP 7551004144. REGON: 530831216."}], "X", "7551004144")
+        self.assertEqual(found["phones"], [])
+
+
+class SearchSelection(unittest.TestCase):
+    def test_no_contact_first_within_tier(self):
+        leads = pd.DataFrame([
+            dict(nip="1", tier="A", size_band="pasuje", phone="", email="a@a.pl", website=""),
+            dict(nip="2", tier="B", size_band="pasuje", phone="600", email="", website=""),
+            dict(nip="3", tier="B", size_band="pasuje", phone="", email="", website=""),
+            dict(nip="4", tier="B", size_band="pasuje", phone="", email="", website=""),
+            dict(nip="5", tier="B", size_band="duża", phone="", email="", website=""),
+            dict(nip="6", tier="X", size_band="pasuje", phone="", email="", website=""),
+            dict(nip="7", tier="B", size_band="pasuje", phone="600", email="", website="https://a.pl"),
+        ])
+        self.assertEqual(list(select_firms(leads, {"4"})["nip"]), ["1", "3", "2"])
 
 
 class Size(unittest.TestCase):

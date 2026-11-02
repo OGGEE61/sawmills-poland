@@ -109,7 +109,7 @@ venv/bin/python src/enrichment/tests_leads.py    # unit tests
 
 Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażowa" tab holds the working lists, notes, next-step dates and CSV export.
 
-Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`. `refresh.sh` caps Google Places at 1,000 and Serper at 2,500 lookups per run. Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
+Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`. `refresh.sh` caps Google Places at 1,000 and web search at 50 lookups per run (`SEARCH_LIMIT`). Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
 
 To widen the market beyond 16.10/16.11 (slow, resumable, stop any time):
 
@@ -127,7 +127,7 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 | Wider market | `expand_market.py` | pallets, joinery, flooring, furniture, forestry companies | nothing. Sole traders outside 16.10 need a new CEIDG run with a token |
 | GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested on GUS's test server |
 | Google Maps | `google_places.py` | phone, website, Maps link | `GOOGLE_PLACES_KEY` (billed). Tested on a stub only |
-| Web search | `web_search.py` | websites, contact snippets | `SERPER_API_KEY` (billed). Tested on a stub only |
+| Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` or `SERPER_API_KEY` (billed) |
 
 **Which machine:** `WASTE_RULES` in `build_leads.py` maps main PKD to chipper, briquetter and typical waste. These are assumptions: correct them from real conversations.
 

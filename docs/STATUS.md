@@ -4,13 +4,14 @@
 
 | Live firms (6,370) | Phone | Email | Website | Full contact name | Role only |
 |---|---|---|---|---|---|
-| KRS (1,873) | 82 | 285 | 146 | 117 | ~1,700 |
-| CEIDG (4,497) | 731 | 784 | 99 | 4,497 | - |
+| KRS (1,873) | 90 | 290 | 152 | 117 | ~1,700 |
+| CEIDG (4,497) | 752 | 792 | 103 | 4,497 | - |
 
 - Target: 0.5-2 t/h machines, Weima sub-brand for the smallest clients. 160 big firms and 149 very small ones are kept out of tiers A and B.
-- Tiers: A 59, B 854, C 3466, D 1991, X 664 (closing or closed). Of A+B: 185 have a phone, 88 email only, 640 need research.
+- Tiers: A 59, B 854, C 3466, D 1991, X 664 (closing or closed). Of A+B: 214 have a phone, 88 email only, 611 need research.
+- Search API: 99 firms searched with SearchApi.io (A first, then B firms with no contact). Tier A top 50 went from 2 to 18 phones; the 49 B firms from 0 to 13. 20 phones come from search snippets, so check them on the first call. Credits used up.
 - EU projects, right-sized firms: 25 have a recent waste/biomass/GOZ project, 11 a recent machinery project.
-- Wider market: only 300 of the candidates are verified so far; 21 kept (7%). `expand_market.py verify` is resumable.
+- Wider market: verification in progress, 8,800 of 15,317 candidates read and 1,158 kept (13%), not yet in the list. `expand_market.py verify` is resumable.
 
 **Known limits**
 - Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
@@ -20,9 +21,9 @@
 - Financial statements (RDF) return 403 from bot protection to scripts. Not worked around; no revenue or headcount.
 - By hand on each firm's card, not automated: BDO, RDF, FSC, ARiMR. Skipped: job ads, the e-drewno buyer list (unverified that it exists), PEFC, dane.gov.pl farm-beneficiary list (dead 2017 link).
 - Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
-- GUS: tested on its test server only, which anonymises sole traders. Places and Serper: tested on stubs only.
+- GUS: tested on its test server only, which anonymises sole traders. Places and Serper: tested on stubs only. SearchApi.io: tested live.
 
-**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token; GUS key; optionally Serper and Places keys; fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token; GUS key; replace the SearchApi key (it was pasted in a chat); optionally Serper and Places keys; fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
 
 ---
 

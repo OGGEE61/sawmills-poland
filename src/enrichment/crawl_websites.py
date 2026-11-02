@@ -20,7 +20,7 @@ from urllib.robotparser import RobotFileParser
 import pandas as pd
 import requests
 
-from contacts import EMAIL_RE, NOT_OWN_SITE, PROCESSED, clean_phone, clean_site, pair_fits, registry_contacts
+from contacts import EMAIL_RE, NOT_OWN_SITE, PROCESSED, clean_phone, clean_site, pair_fits, plain, registry_contacts
 
 OUTPUT = PROCESSED / "website_contacts.csv"
 SEARCH_FILE = PROCESSED / "web_search.jsonl"
@@ -125,6 +125,11 @@ def names_on_page(masks, text):
     return found
 
 
+def name_in_domain(name, host):
+    host = re.sub(r"[^A-Z0-9]", "", plain(host))
+    return any(plain(token) in host for token in name_tokens(name))
+
+
 def krs_masks():
     signals = pd.read_csv(PROCESSED / "krs_signals.csv", dtype=str).fillna("")
     masks = {}
@@ -201,7 +206,8 @@ def crawl(firm):
     )
     # a registry or email-domain site belongs to the firm unless it is parked; search hits must prove it
     if firm["site_source"] == "wyszukiwarka":
-        record["verified"] = record["nip_on_site"] or record["name_on_site"]
+        # a directory or job board also shows the firm's name, and its contacts are not the firm's
+        record["verified"] = record["nip_on_site"] or (record["name_on_site"] and name_in_domain(firm["name"], host))
     else:
         record["verified"] = record["nip_on_site"] or record["name_on_site"] or len(WOOD_RE.findall(all_text)) >= WOOD_HITS_NEEDED
     if not record["verified"]:
