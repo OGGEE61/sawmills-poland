@@ -111,6 +111,15 @@ Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażow
 
 Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`. `refresh.sh` caps Google Places at 1,000 and web search at 50 lookups per run (`SEARCH_LIMIT`). Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
 
+Web search takes the best tier first and, within a tier, firms with no contact at all first. It skips firms already searched. If both search keys are set, SearchApi is used, so set only one. To run a batch:
+
+```
+export SERPER_API_KEY=...                          # type it in the terminal; do not paste keys into chats or commit them
+venv/bin/python src/enrichment/web_search.py 50    # the number caps billed lookups
+venv/bin/python src/enrichment/crawl_websites.py   # verify found sites and read their contacts
+venv/bin/python src/enrichment/build_leads.py
+```
+
 To widen the market beyond 16.10/16.11 (slow, resumable, stop any time):
 
 ```
@@ -127,7 +136,7 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 | Wider market | `expand_market.py` | pallets, joinery, flooring, furniture, forestry companies | nothing. Sole traders outside 16.10 need a new CEIDG run with a token |
 | GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested on GUS's test server |
 | Google Maps | `google_places.py` | phone, website, Maps link | `GOOGLE_PLACES_KEY` (billed). Tested on a stub only |
-| Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` or `SERPER_API_KEY` (billed) |
+| Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` (tested live) or `SERPER_API_KEY` (tested on a stub only). Billed |
 
 **Which machine:** `WASTE_RULES` in `build_leads.py` maps main PKD to chipper, briquetter and typical waste. These are assumptions: correct them from real conversations.
 

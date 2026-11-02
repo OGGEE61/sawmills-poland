@@ -9,9 +9,9 @@
 
 - Target: 0.5-2 t/h machines, Weima sub-brand for the smallest clients. 160 big firms and 149 very small ones are kept out of tiers A and B.
 - Tiers: A 59, B 854, C 3466, D 1991, X 664 (closing or closed). Of A+B: 214 have a phone, 88 email only, 611 need research.
-- Search API: 99 firms searched with SearchApi.io (A first, then B firms with no contact). Tier A top 50 went from 2 to 18 phones; the 49 B firms from 0 to 13. 20 phones come from search snippets, so check them on the first call. Credits used up.
+- Search API: 99 firms searched with SearchApi.io (A first, then B firms with no contact). Tier A top 50 went from 2 to 18 phones; the 49 B firms from 0 to 13. 20 phones come from search snippets, so check them on the first call. SearchApi credits are used up; 552 tier B firms with no contact have not been searched.
 - EU projects, right-sized firms: 25 have a recent waste/biomass/GOZ project, 11 a recent machinery project.
-- Wider market: verification in progress, 8,800 of 15,317 candidates read and 1,158 kept (13%), not yet in the list. `expand_market.py verify` is resumable.
+- Wider market: verification in progress, 9,200 of 15,317 candidates read and 1,202 kept (13%), not yet in the list. `expand_market.py verify` is resumable.
 
 **Known limits**
 - Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
@@ -23,7 +23,14 @@
 - Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
 - GUS: tested on its test server only, which anonymises sole traders. Places and Serper: tested on stubs only. SearchApi.io: tested live.
 
-**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token; GUS key; replace the SearchApi key (it was pasted in a chat); optionally Serper and Places keys; fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token; GUS key; replace the SearchApi key (it was pasted in a chat); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+
+**Next**
+1. Start calling the 214 A+B firms with a phone, beginning with the "Zmiany" list. Note which firms have wood waste and buy: scoring has no sales data yet.
+2. Create a Serper account (2,500 free queries reported, no card). Run 50 firms and check the results, then the rest of the 552 tier B firms: see `docs/WORKFLOW.md`.
+3. When `expand_market.py verify` finishes, run `refresh.sh` to add those firms to the list.
+4. Use Google Places (billed) only if search leaves too many strong firms without a phone.
+5. When GUS and CEIDG keys arrive, run them. Both are free and cover firms that search misses.
 
 ---
 
