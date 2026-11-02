@@ -15,8 +15,9 @@ $PY $E/fetch_eu_projects.py
 if [ ! -f data/processed/leads.csv ]; then $PY $E/build_leads.py; fi
 
 if [ -n "${GUS_API_KEY:-}" ]; then $PY $E/gus_regon.py; fi
-if [ -n "${GOOGLE_PLACES_KEY:-}" ]; then $PY $E/google_places.py; fi
-if [ -n "${SERPER_API_KEY:-}" ]; then $PY $E/web_search.py; fi
+# billed per request: capped per run at the free allowance. Both take top-priority firms first and skip those already done
+if [ -n "${GOOGLE_PLACES_KEY:-}" ]; then $PY $E/google_places.py 1000; fi
+if [ -n "${SERPER_API_KEY:-}" ]; then $PY $E/web_search.py 2500; fi
 
 $PY $E/crawl_websites.py
 $PY $E/build_leads.py

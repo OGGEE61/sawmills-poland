@@ -109,6 +109,8 @@ venv/bin/python src/enrichment/tests_leads.py    # unit tests
 
 Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażowa" tab holds the working lists, notes, next-step dates and CSV export.
 
+Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`. `refresh.sh` caps Google Places at 1,000 and Serper at 2,500 lookups per run. Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
+
 To widen the market beyond 16.10/16.11 (slow, resumable, stop any time):
 
 ```
