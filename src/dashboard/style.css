@@ -25,6 +25,10 @@
     padding: 0;
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-color);
@@ -570,6 +574,16 @@ tr.row-clickable:hover td {
 }
 
 /* Modal Popup */
+/* the page behind an open popup must not scroll */
+body.modal-open {
+    overflow: hidden;
+}
+
+.modal-body,
+.lead-panel {
+    overscroll-behavior: contain;
+}
+
 .modal-overlay {
     position: fixed;
     inset: 0;

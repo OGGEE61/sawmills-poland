@@ -713,6 +713,7 @@ function openCompanyModal(row) {
     `;
 
     modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
 
     const leadLink = modalBody.querySelector('[data-open-lead]');
     if (leadLink) {
@@ -728,6 +729,7 @@ function openCompanyModal(row) {
 function closeCompanyModal() {
     const modal = document.getElementById('companyModal');
     if (modal) modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
 }
 
 function renderCharts() {

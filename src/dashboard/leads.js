@@ -208,6 +208,7 @@ function openPanel(nip) {
         </div>`;
 
     panel.hidden = false;
+    document.body.classList.add('modal-open');
     document.getElementById('panelShade').hidden = false;
     document.getElementById('panelClose').addEventListener('click', closePanel);
     document.getElementById('copyNip').addEventListener('click', e => {
@@ -217,6 +218,7 @@ function openPanel(nip) {
 
 function closePanel() {
     document.getElementById('panel').hidden = true;
+    document.body.classList.remove('modal-open');
     document.getElementById('panelShade').hidden = true;
 }
 
