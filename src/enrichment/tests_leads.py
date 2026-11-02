@@ -114,12 +114,22 @@ class SearchSelection(unittest.TestCase):
 
 
 class Size(unittest.TestCase):
-    def test_small_clients_are_the_target(self):
-        base = dict(legal_form="JDG", has_group_accounts=False, has_supervisory_board=False, share_capital=0, eu_value=0, verification="CZYNNY")
+    def test_size_bands(self):
+        base = dict(legal_form="SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", has_group_accounts=False, has_supervisory_board=False,
+                    share_capital=0, eu_value=0, verification="CZYNNY", website="", extra_sites=False, local_units=False)
         self.assertEqual(size_band(base), "pasuje")
         self.assertEqual(size_band({**base, "legal_form": "SPÓŁKA AKCYJNA"}), "duża")
         self.assertEqual(size_band({**base, "share_capital": 8_000_000}), "duża")
         self.assertEqual(size_band({**base, "verification": "ZWOLNIONY"}), "mała")
+
+    def test_sole_trader_needs_a_sign_of_scale(self):
+        sole = dict(legal_form="JDG", has_group_accounts=False, has_supervisory_board=False, share_capital=0, eu_value=0,
+                    verification="CZYNNY", website="", extra_sites=False, local_units=False)
+        self.assertEqual(size_band(sole), "mała")
+        self.assertEqual(size_band({**sole, "website": "https://tartak.pl"}), "pasuje")
+        self.assertEqual(size_band({**sole, "eu_value": 100_000}), "pasuje")
+        self.assertEqual(size_band({**sole, "extra_sites": True}), "pasuje")
+        self.assertEqual(size_band({**sole, "website": "https://tartak.pl", "verification": "ZWOLNIONY"}), "mała")
 
 
 class Blockers(unittest.TestCase):

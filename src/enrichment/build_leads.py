@@ -215,12 +215,15 @@ def fit_score(row, reasons):
 
 
 def size_band(row):
-    """The machines do 0.5-2 t/h and are the small-client brand: big plants belong with the main Weima line."""
+    """The machines do 0.5-2 t/h: big plants belong with the main Weima line, micro firms cannot justify the machine."""
     if (row["legal_form"] == "SPÓŁKA AKCYJNA" or row["has_group_accounts"] or row["has_supervisory_board"]
             or row["share_capital"] >= BIG_CAPITAL or row["eu_value"] >= BIG_EU_VALUE):
         return "duża"
     # below the VAT threshold there is little turnover, so probably too little waste and money
     if row["verification"] in ("ZWOLNIONY", "NIEZAREJESTROWANY"):
+        return "mała"
+    # no size data for sole traders, so these stand in for scale: own website, EU project, more than one site
+    if row["legal_form"] == "JDG" and not (row["website"] or row["eu_value"] or row["extra_sites"] or row["local_units"]):
         return "mała"
     return "pasuje"
 
@@ -254,7 +257,8 @@ def capacity_score(row, reasons):
         score += 20
         reasons.append(f"Projekty UE za {value / 1_000_000:.1f} mln zł".replace(".", ",") if value >= 1_000_000 else f"Projekty UE za {value / 1000:.0f} tys. zł")
     if row["size_band"] == "mała":
-        reasons.append("Mała skala: zwolniona z VAT lub bez VAT")
+        reasons.append("Mała skala: zwolniona z VAT lub bez VAT" if row["verification"] in ("ZWOLNIONY", "NIEZAREJESTROWANY")
+                       else "Mała skala: JDG bez własnej strony, projektu UE i drugiego zakładu")
         return min(score, 30)
     return min(score, 100)
 
