@@ -119,9 +119,13 @@ function renderRows() {
     const slice = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
     document.getElementById('listTitle').textContent = value('fTier') === 'X' ? 'Odrzucone' : VIEWS[activeView].title;
     document.getElementById('listCount').textContent = `${filtered.length.toLocaleString('pl-PL')} firm, najlepiej dopasowane na górze`;
-    document.getElementById('pageLabel').textContent = `Strona ${page + 1} z ${maxPage + 1}`;
+    document.getElementById('pageInput').value = page + 1;
+    document.getElementById('pageInput').max = maxPage + 1;
+    document.getElementById('maxPageLabel').textContent = maxPage + 1;
+    document.getElementById('first').disabled = page === 0;
     document.getElementById('prev').disabled = page === 0;
     document.getElementById('next').disabled = page >= maxPage;
+    document.getElementById('last').disabled = page >= maxPage;
     if (!slice.length) {
         body.innerHTML = '<tr><td colspan="6" class="empty">Nic nie pasuje do tych filtrów.</td></tr>';
         return;
@@ -139,6 +143,13 @@ function renderRows() {
             <td class="col-why">${reasonChips(l)}</td>
         </tr>`;
     }).join('');
+}
+
+// renderRows caps the page at the last one
+function goToPage(target) {
+    page = Math.max(target, 0);
+    renderRows();
+    window.scrollTo(0, 0);
 }
 
 function bar(label, score) {
@@ -254,8 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = e.target.closest('tr[data-nip]');
         if (row) openPanel(row.dataset.nip);
     });
-    document.getElementById('prev').addEventListener('click', () => { page--; renderRows(); window.scrollTo(0, 0); });
-    document.getElementById('next').addEventListener('click', () => { page++; renderRows(); window.scrollTo(0, 0); });
+    document.getElementById('first').addEventListener('click', () => goToPage(0));
+    document.getElementById('prev').addEventListener('click', () => goToPage(page - 1));
+    document.getElementById('next').addEventListener('click', () => goToPage(page + 1));
+    document.getElementById('last').addEventListener('click', () => goToPage(filtered.length));
+    document.getElementById('pageInput').addEventListener('change', e => goToPage((parseInt(e.target.value, 10) || 1) - 1));
     document.getElementById('resetBtn').addEventListener('click', () => {
         ['q', 'fVoiv', 'fTier', 'fAction', 'fProduct', 'fTag', 'fSource'].forEach(id => { document.getElementById(id).value = ''; });
         document.getElementById('fEu').checked = false;

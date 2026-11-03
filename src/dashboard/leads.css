@@ -48,6 +48,7 @@
 .leads-table a, .lead-panel a { color: var(--accent); }
 .stage-pill { white-space: nowrap; font-size: 12px; font-weight: 600; }
 .pagination { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 12px; }
+.page-input { width: 60px; background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; text-align: center; }
 .method { max-width: 900px; }
 .empty { padding: 28px; text-align: center; color: var(--text-muted); }
 

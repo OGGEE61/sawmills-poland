@@ -79,9 +79,11 @@
                 </table>
             </div>
             <div class="pagination">
+                <button id="first" class="btn btn-icon" aria-label="Pierwsza strona">&laquo;</button>
                 <button id="prev" class="btn btn-icon" aria-label="Poprzednia strona">&larr;</button>
-                <span id="pageLabel" class="muted"></span>
+                <span class="muted">Strona <input type="number" id="pageInput" class="page-input" min="1" value="1" aria-label="Numer strony"> z <span id="maxPageLabel">1</span></span>
                 <button id="next" class="btn btn-icon" aria-label="Następna strona">&rarr;</button>
+                <button id="last" class="btn btn-icon" aria-label="Ostatnia strona">&raquo;</button>
             </div>
         </section>
 
