@@ -1,19 +1,22 @@
-# Project status — 2026-11-02
+# Project status — 2026-11-03
 
 **Goal:** sell wood chippers and briquette machines to Polish firms with wood waste. Run and refresh: `docs/WORKFLOW.md`, Step 4. Nothing below the line has been re-checked since 2026-10-19.
 
-| Live firms (7,577) | Phone | Email | Website | Full contact name | Role only |
+| Live firms (8,907) | Phone | Email | Website | Full contact name | Role only |
 |---|---|---|---|---|---|
-| KRS (3,080) | 308 | 655 | 420 | 242 | 2,786 |
+| KRS (4,410) | 362 | 970 | 514 | 337 | 4,018 |
 | CEIDG (4,497) | 1,019 | 963 | 231 | 4,497 | - |
 
 - Target: 0.5-2 t/h machines, Weima sub-brand for small clients, but still big machines: micro firms are not the target (user, 2026-11-02). Big firms and very small ones are kept out of tiers A and B. A sole trader needs its own website, an EU project or a second address to count as the right size; the second address is a weak sign.
-- Tiers: A 76, B 488, C 1994, D 5019, X 999 (closing or closed). Of A+B (418 sole traders, 146 companies): 346 have a phone, 53 email only, 165 need research.
+- Tiers: A 91, B 555, C 2538, D 5723, X 1152 (closing or closed). Of A+B (418 sole traders, 228 companies): 359 have a phone, 62 email only, 225 need research.
 - Search API: 1,566 firms searched, 99 with SearchApi.io and 1,467 with Serper. The last batch of 512 (A, B, then the best of C) went from 0 to 177 phones. 215 live phones come from search snippets, so check them on the first call. Serper has 1,032 free queries left. Sole traders without another sign of scale are no longer searched, so a website could raise only those already searched.
 - EU projects, right-sized firms: 25 have a recent waste/biomass/GOZ project, 11 a recent machinery project.
 - Wider market: finished. 15,317 candidates read, 1,564 companies kept and merged; 1,542 were new to the list. No further PKD codes for now.
+- Companies registered after 2022 (2026-11-03): sprawdz-firme.pl lists almost none after about November 2022, so KRS numbers 1,000,000-1,275,000 were read one by one from the official API. 1,489 in-scope firms merged (wood, forestry, or a secondary sawmill code), 1,483 on the list: A 15, B 67, C 544, D 704, X 153. Only 54 have a phone and 354 an email, and no paid search was run for them. Furniture and landscaping found in the same run were left out on the user's decision. They remain in `expansion_walk_firms.csv`.
+- Window makers: 251 firms carry the `okna` tag. It comes from PKD 16.25, or a window name on a firm with a 16.x main activity, so other 16.23 window makers can lack it.
 
 **Known limits**
+- KRS API speed: no published limit found. 15 requests/s from one IP drew no 429 over about 226,000 reads, but that is observed, not a stated allowance.
 - Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
 - Project type is keyword-based; EU matches are by name (no NIP in the lists).
 - Waste volume is not known for any firm: PKD and website words are stand-ins.
@@ -26,6 +29,7 @@
 **Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (call +48 222 500 123 to get it; CEIDG support is checking bulk access); GUS key (requested 2026-11-02); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
 
 **Next**
+0. Contacts for the new firms: the 82 new A+B firms are the place to spend search queries.
 1. For now the tool is for the user only, so the full list stays local. The public site has registry data only.
 2. The user confirmed the top 15 firms with a phone as firms worth contacting (2026-11-02), so the size rule stays. This is a judgement, not sales data: review it after the first conversations.
 3. Spend the remaining Serper queries only on strong companies, if contacts run short.
@@ -40,7 +44,7 @@ See also `docs/WORKFLOW.md` for how data flows from fetch to dashboard.
 
 ## TL;DR
 - **Data:** 4,541 CEIDG sole proprietors + 2,479 KRS companies (~7,013 unique NIPs).
-- **KRS re-check:** nothing new. Discovery returned 9,364 candidates (we had 9,365); the 3,594 "errors" are deregistered companies, not failures.
+- **KRS re-check:** nothing new (later found to be a blind spot of the source: see 2026-11-03 above). Discovery returned 9,364 candidates (we had 9,365); the 3,594 "errors" are deregistered companies, not failures.
 - **VAT verification (done):** all NIPs checked in the Ministry of Finance Biała Lista (free, no key). 4,476 active, 148 exempt, 8 not registered, **486 removed from VAT (possibly closed — 450 of them KRS)**, 1,895 not found (weak signal; many sole proprietors simply aren't listed).
 - **Dashboard:** new "Weryfikacja VAT" filter, VAT column and a verification section in the company popup. Header 🪵 emoji removed.
 - **CEIDG token:** hardcoded token removed from `fetch_data.py` (now `CEIDG_TOKEN` env var only). It is still in git history (commit 4da45b4) — revoke it. A new key was requested at dane.gov.

@@ -31,7 +31,7 @@ SHARED_CONTACT_LIMIT = 3  # the same phone or email on this many unrelated sites
 # These are assumptions from general wood-industry knowledge: correct them from real sales conversations.
 WASTE_RULES = [
     ("16.10", 70, True, True, "zrzyny, trociny"), ("16.11", 70, True, True, "zrzyny, trociny"), ("16.12", 60, True, True, "trociny, wióry"),
-    ("16.24", 65, True, True, "odcinki, trociny"), ("16.23", 60, True, True, "ścinki, wióry"), ("16.22", 60, False, True, "wióry, pył"),
+    ("16.24", 65, True, True, "odcinki, trociny"), ("16.23", 60, True, True, "ścinki, wióry"), ("16.25", 60, True, True, "ścinki, wióry"), ("16.22", 60, False, True, "wióry, pył"),
     ("16.21", 50, True, True, "ścinki, pył"), ("16.29", 50, False, True, "wióry, trociny"), ("16.", 50, False, True, "wióry, trociny"),
     ("31.0", 50, True, True, "ścinki, pył"),
     # assumed stationary machines: forestry and landscaping usually need mobile chippers, so these rank low
@@ -40,7 +40,8 @@ WASTE_RULES = [
 ]
 SAW_NAME_RE = re.compile(r"TARTAK|TARCIC|\bTRAK\b|SAWMILL|PRZERÓB DREWNA|PRZETARCIE", re.I)
 WOOD_NAME_RE = re.compile(r"DREW|DRZEW|WOOD|TIMBER|\bLAS\b|LEŚN|LESN|PALET|STOLAR|CIESIEL|WIĘŹB|\bHOLZ", re.I)
-PKD_TAGS = {"16.21": "płyty", "16.22": "podłogi", "16.23": "więźba", "16.24": "palety", "16.29": "wyroby z drewna",
+WINDOW_NAME_RE = re.compile(r"\bOKN|OKIEN|WINDOW|FENSTER", re.I)
+PKD_TAGS = {"16.21": "płyty", "16.22": "podłogi", "16.23": "więźba", "16.25": "okna", "16.24": "palety", "16.29": "wyroby z drewna",
             "02.20": "pozyskanie drewna", "02.40": "usługi leśne", "31.0": "meble", "46.73": "handel drewnem"}
 ROLE_RANK = ["PREZES", "WŁAŚCICIEL", "WSPÓLNIK", "WICEPREZES", "DYREKTOR", "ZARZĄD", "CZŁONEK", "PROKURENT"]
 KIND_LABEL = {"WASTE": "odpady/biomasa", "MACHINERY": "maszyny/technologia", "ENERGY": "energia", "EXPORT": "eksport", "LIQUIDITY": "płynność", "OTHER": "inne"}
@@ -361,7 +362,7 @@ def opening_line(row):
         return "Przy paletach zostaje sporo odcinków i trocin. Co dziś z nimi robicie: sprzedajecie, palicie, czy płacicie za odbiór?"
     if row["main_pkd"].startswith(("02.20", "02.40", "81.30")):
         return "Co robicie z gałęziami i drewnem małowymiarowym po wycince: zostawiacie, wozicie, czy macie własny rębak?"
-    if row["main_pkd"].startswith(("16.22", "16.23", "16.29", "31.0")) or "strugarnia" in tags or "meble" in tags:
+    if row["main_pkd"].startswith(("16.22", "16.23", "16.25", "16.29", "31.0")) or "strugarnia" in tags or "meble" in tags:
         return "Przy obróbce zostają wióry i pył. Jak dziś się ich pozbywacie i ile to kosztuje miesięcznie?"
     return "Co dziś robicie z trocinami i zrzynami: sprzedajecie, palicie, czy płacicie za odbiór?"
 
@@ -538,6 +539,9 @@ def build_rows():
             contact_person_source=(lead.get("name_source", "rejestr") if lead else ""), people=people,
         )
         pkd_tags = [tag for prefix, tag in PKD_TAGS.items() if prefix in row["all_pkd"] and row["pkd_count"] <= 50]
+        # plastic and aluminium window makers leave no wood waste, so the name counts only with a wood main activity
+        if WINDOW_NAME_RE.search(row["name"]) and row["main_pkd"].startswith("16."):
+            pkd_tags.append("okna")
         row["all_tags"] = "; ".join(dict.fromkeys([t for t in row["tags"].split("; ") if t] + pkd_tags))
         rows.append(row)
     return rows

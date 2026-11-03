@@ -72,6 +72,7 @@ class Product(unittest.TestCase):
         offer = lambda main, tags="", fit=60: product_for(dict(main_pkd=main, tags=tags, fit=fit))
         self.assertEqual(offer("16.10.Z"), "Rębak + brykieciarka")
         self.assertEqual(offer("16.22.Z"), "Brykieciarka")
+        self.assertEqual(offer("16.25.Z"), "Rębak + brykieciarka")
         self.assertEqual(offer("02.20.Z"), "Rębak")
         self.assertEqual(offer("16.22.Z", "suszarnia"), "Rębak + brykieciarka")
         self.assertEqual(offer("41.20.Z", "", 10), "")

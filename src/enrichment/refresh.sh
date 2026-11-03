@@ -6,6 +6,10 @@ set -e
 PY="venv/bin/python -W ignore"
 E=src/enrichment
 
+# newly registered companies: sprawdz-firme.pl barely lists them, so read the new KRS numbers directly
+if [ -f data/processed/expansion_walk_checked.csv ]; then
+    (cd $E && ../../venv/bin/python -W ignore walk_krs.py --new && ../../venv/bin/python -W ignore merge_walk.py)
+fi
 $PY $E/build_master.py
 $PY $E/bialalista.py
 $PY $E/merge_verification.py

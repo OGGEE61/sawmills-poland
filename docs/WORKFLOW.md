@@ -69,7 +69,18 @@ To add other wood trades (the codes `expand_market.py` covers for companies), ru
 
 Notes:
 - `errors_full.csv` (3,594 rows) are companies no longer in KRS (deregistered), not failures.
-- The last re-check found **no new KRS companies**.
+- `sprawdz-firme.pl` lists almost no companies registered after about November 2022, so re-running discovery finds nothing new. Newer companies come from the walk below.
+
+**Newer companies.** The KRS API cannot search by PKD, but numbers are sequential, so they can be read one by one:
+
+```
+cd src/enrichment
+../../venv/bin/python walk_krs.py 1000000 1275000 --workers 4 --rate 15   # about 5 hours, resumable, already done once
+../../venv/bin/python walk_krs.py --new                                   # only what is new; refresh.sh runs this
+../../venv/bin/python merge_walk.py                                       # add in-scope firms to expansion_firms.csv
+```
+
+All workers share one rate limit. On HTTP 429 they pause 60 s and the rate halves; the third 429 stops the run, and a re-run continues. Do not use proxies. `merge_walk.py` takes wood (16.x), forestry (02.20, 02.40) and any firm with a sawmill code. It leaves furniture and landscaping out, though both stay in `expansion_walk_firms.csv`.
 
 ## Step 2: VAT verification (free, no key)
 
@@ -105,7 +116,7 @@ The machines do 0.5-2 t/h and are a Weima sub-brand for the smallest clients, so
 
 ```
 venv/bin/python -m pip install -r src/enrichment/requirements.txt
-sh src/enrichment/refresh.sh                     # rebuild everything; run monthly. Optional sources run if their key is set
+sh src/enrichment/refresh.sh                     # rebuild everything; run monthly. Adds about 25 minutes reading new KRS numbers. Optional sources run if their key is set
 venv/bin/python src/enrichment/tests_leads.py    # unit tests
 ```
 
@@ -136,6 +147,7 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 | EU project lists | `fetch_eu_projects.py` | projects by type (waste/biomass first). Matched by name, no NIP | nothing |
 | Firm websites | `crawl_websites.py` | phones, emails, waste/heat/machine keywords, names fitting KRS masks | nothing |
 | Wider market | `expand_market.py` | pallets, joinery, flooring, furniture, forestry companies | nothing. Sole traders outside 16.10 need a new CEIDG run with a token |
+| New KRS numbers | `walk_krs.py`, `merge_walk.py` | companies registered after 2022 | nothing |
 | GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested on GUS's test server |
 | Google Maps | `google_places.py` | phone, website, Maps link | `GOOGLE_PLACES_KEY` (billed). Tested on a stub only |
 | Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` or `SERPER_API_KEY` (both tested live). Billed |
