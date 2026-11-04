@@ -24,9 +24,9 @@
 - Financial statements (RDF) return 403 from bot protection to scripts. Not worked around; no revenue or headcount.
 - Left out, no bulk route that scripts may use: BDO, RDF, FSC, ARiMR. We plan only what can be automated (user, 2026-11-02). Also skipped: job ads, the e-drewno buyer list (unverified that it exists), PEFC, dane.gov.pl farm-beneficiary list (dead 2017 link).
 - Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
-- GUS: tested on its test server only, which anonymises sole traders. Places: tested on a stub only. SearchApi.io and Serper: tested live.
+- GUS: full run done 2026-11-04 on 8,907 firms: 1,000 new main phones, 496 new main emails. GUS never replaces a contact we already had; a different one goes in `other_phones` / `other_emails`. A sole trader needs at least 2 local units to count as multi-site: 30% have one, too common to mean size (user-approved judgement, no sales data). Places: tested on a stub only. SearchApi.io and Serper: tested live.
 
-**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (call +48 222 500 123 to get it; CEIDG support is checking bulk access); GUS key (requested 2026-11-02); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (call +48 222 500 123 to get it; CEIDG support is checking bulk access); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
 
 **Next**
 0. Contacts for the new firms: the 82 new A+B firms are the place to spend search queries.
@@ -34,7 +34,7 @@
 2. The user confirmed the top 15 firms with a phone as firms worth contacting (2026-11-02), so the size rule stays. This is a judgement, not sales data: review it after the first conversations.
 3. Spend the remaining Serper queries only on strong companies, if contacts run short.
 4. Use Google Places (billed) only if search leaves too many strong firms without a phone.
-5. When GUS and CEIDG keys arrive, run GUS first. Do not run `fetch_data.py --wood` by default: it adds thousands of small sole traders.
+5. When the CEIDG key arrives, run GUS first. Do not run `fetch_data.py --wood` by default: it adds thousands of small sole traders.
 
 ---
 

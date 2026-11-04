@@ -27,7 +27,13 @@ SESSION_SECONDS = 50 * 60  # GUS sessions expire after an hour
 FIELDS = ["nip", "found", "regon", "phone", "email", "website", "local_units", "checked_on"]
 ACTION = "http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/"
 NAMESPACES = ('xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ns="http://CIS/BIR/PUBL/2014/07" '
-              'xmlns:dat="http://CIS/BIR/PUBL/2014/07/DataContract"')
+              'xmlns:dat="http://CIS/BIR/PUBL/2014/07/DataContract" xmlns:g="http://CIS/BIR/2014/07"')
+GET_ACTION = "http://CIS/BIR/2014/07/IUslugaBIR/"  # GetValue lives in a different contract from the rest
+NOT_FOUND = "4"  # KomunikatKod: no record for these search terms
+
+
+class GusError(requests.RequestException):
+    pass
 
 
 class Client:
@@ -37,10 +43,10 @@ class Client:
         self.logged_at = 0
         self.login()
 
-    def call(self, operation, body):
+    def call(self, operation, body, action=ACTION, prefix="ns"):
         envelope = (f'<soap:Envelope {NAMESPACES}><soap:Header xmlns:wsa="http://www.w3.org/2005/08/addressing">'
-                    f"<wsa:To>{self.url}</wsa:To><wsa:Action>{ACTION}{operation}</wsa:Action></soap:Header>"
-                    f"<soap:Body><ns:{operation}>{body}</ns:{operation}></soap:Body></soap:Envelope>")
+                    f"<wsa:To>{self.url}</wsa:To><wsa:Action>{action}{operation}</wsa:Action></soap:Header>"
+                    f"<soap:Body><{prefix}:{operation}>{body}</{prefix}:{operation}></soap:Body></soap:Envelope>")
         response = self.session.post(self.url, data=envelope.encode("utf-8"), timeout=40,
                                      headers={"Content-Type": "application/soap+xml; charset=utf-8"})
         response.raise_for_status()
@@ -56,10 +62,22 @@ class Client:
         self.session.headers["sid"] = sid
         self.logged_at = time.time()
 
+    def fetch(self, operation, body):
+        """Rows of a reply. Empty means GUS has no such record; an empty reply for any other reason must not be saved as one."""
+        for _ in range(2):
+            found = rows(self.call(operation, body))
+            if found:
+                return found
+            code = self.call("GetValue", "<g:pNazwaParametru>KomunikatKod</g:pNazwaParametru>", GET_ACTION, "g")
+            if code == NOT_FOUND:
+                return []
+            self.login()  # the session dropped or GUS refused: try once more on a new one
+        raise GusError(f"{operation} gave no data, GUS code {code!r}")
+
     def lookup(self, nip):
         if time.time() - self.logged_at > SESSION_SECONDS:
             self.login()
-        found = rows(self.call("DaneSzukajPodmioty", f"<ns:pParametryWyszukiwania><dat:Nip>{nip}</dat:Nip></ns:pParametryWyszukiwania>"))
+        found = self.fetch("DaneSzukajPodmioty", f"<ns:pParametryWyszukiwania><dat:Nip>{nip}</dat:Nip></ns:pParametryWyszukiwania>")
         if not found:
             return {"found": False}
         # a closed entry can sit next to the live one
@@ -67,10 +85,17 @@ class Client:
         regon, kind = subject.get("Regon", ""), subject.get("Typ", "")
         report = "BIR11OsPrawna" if kind == "P" else "BIR11OsFizycznaDzialalnoscCeidg"
         prefix = "praw_" if kind == "P" else "fiz_"
-        data = rows(self.call("DanePobierzPelnyRaport", f"<ns:pRegon>{regon}</ns:pRegon><ns:pNazwaRaportu>{report}</ns:pNazwaRaportu>"))
-        data = data[0] if data else {}
+        data = self.report(regon, report)
+        if not data:
+            print(f"{nip}: no {report} report (type {kind}, silo {subject.get('SilosID', '')})", flush=True)
+        # sole traders keep the local units count in a separate report
+        units = data if kind == "P" else self.report(regon, "BIR11OsFizycznaDaneOgolne")
         return {"found": True, "regon": regon, "phone": data.get(f"{prefix}numerTelefonu", ""), "email": data.get(f"{prefix}adresEmail", ""),
-                "website": data.get(f"{prefix}adresStronyinternetowej", ""), "local_units": data.get(f"{prefix}liczbaJednLokalnych", "")}
+                "website": data.get(f"{prefix}adresStronyinternetowej", ""), "local_units": units.get(f"{prefix}liczbaJednLokalnych", "")}
+
+    def report(self, regon, name):
+        data = self.fetch("DanePobierzPelnyRaport", f"<ns:pRegon>{regon}</ns:pRegon><ns:pNazwaRaportu>{name}</ns:pNazwaRaportu>")
+        return data[0] if data else {}
 
 
 def rows(text):

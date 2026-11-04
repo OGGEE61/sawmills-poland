@@ -105,6 +105,16 @@ def pair_in_words(mask, words):
     return None
 
 
+def merge_contacts(found):
+    """(main, its source, other values, their sources) from (value, source) pairs, best source first. Repeats count once."""
+    unique = {}
+    for value, source in found:
+        if value:
+            unique.setdefault(re.sub(r"\s", "", value).lower(), (value, source))
+    values = list(unique.values()) or [("", "")]
+    return values[0][0], values[0][1], "; ".join(v for v, _ in values[1:]), "; ".join(s for _, s in values[1:])
+
+
 def resolve_name(mask, full_names, firm_name, emails, site_names):
     """A KRS mask becomes a full name only when a public source of this same firm fits it. Returns (name, source)."""
     fit = next((n for n in full_names if mask_fits(mask, n)), None)
@@ -224,9 +234,14 @@ def size_band(row):
     if row["verification"] in ("ZWOLNIONY", "NIEZAREJESTROWANY"):
         return "mała"
     # no size data for sole traders, so these stand in for scale: own website, EU project, more than one site
-    if row["legal_form"] == "JDG" and not (row["website"] or row["eu_value"] or row["extra_sites"] or row["local_units"]):
+    if row["legal_form"] == "JDG" and not (row["website"] or row["eu_value"] or row["extra_sites"] or several_sites(row)):
         return "mała"
     return "pasuje"
+
+
+def several_sites(row):
+    # 30% of sole traders register one local unit, too common to say anything about size
+    return row["local_units"] >= (2 if row["legal_form"] == "JDG" else 1)
 
 
 def capacity_score(row, reasons):
@@ -243,7 +258,7 @@ def capacity_score(row, reasons):
         score += 15
     elif age is not None and age >= 2:
         score += 8
-    if row["extra_sites"] or row["branches"] or row["local_units"]:
+    if row["extra_sites"] or row["branches"] or several_sites(row):
         score += 15
         reasons.append("Więcej niż jeden zakład")
     if row["latest_filing_year"] >= TODAY.year - 2:
@@ -475,7 +490,7 @@ def build_rows():
             "eu_projects": projects,
             "eu_value": sum(p["value"] for p in projects),
             "eu_wood": any(p["wood"] for p in projects),
-            "tags": site.get("tags", ""), "site_verified": bool(site), "local_units": number(gus_hit.get("local_units")) > 0,
+            "tags": site.get("tags", ""), "site_verified": bool(site), "local_units": number(gus_hit.get("local_units")),
             "maps_url": place.get("maps_url", ""),
         }
         if source == "KRS":
@@ -517,22 +532,19 @@ def build_rows():
             people = [{"role": "WŁAŚCICIEL", "name": nice_name(owner), "initials": ""}] if owner else []
         row["age"] = years_since(row["started"])
 
-        # contact details: register first, then the firm's own site, then search snippets (least trusted)
-        site_phones = [p for p in site.get("phones", "").split("; ") if p]
-        site_emails = [e for e in site.get("emails", "").split("; ") if e]
-        search_phones = [clean_phone(p) for p in search_hit.get("phones", [])]
-        search_emails = [clean_email(e) for e in search_hit.get("emails", [])]
-        phone, phone_source = next(((p, s) for p, s in [(firm["phone"], "rejestr"), (clean_phone(gus_hit.get("phone")), "GUS")]
-                                    + [(p, "strona firmy") for p in site_phones] + [(place.get("phone", ""), "Mapy Google")]
-                                    + [(p, "wyszukiwarka") for p in search_phones if p] if p), ("", ""))
-        email, email_source = next(((e, s) for e, s in [(firm["email"], "rejestr"), (clean_email(gus_hit.get("email")), "GUS")]
-                                    + [(e, "strona firmy") for e in site_emails]
-                                    + [(e, "wyszukiwarka") for e in search_emails if e] if e), ("", ""))
+        # contact details: register first, then the firm's own site, then search snippets (least trusted). GUS came last,
+        # so it can fill a gap but never replaces a number we already had; any other number found is kept alongside
+        phones = [(firm["phone"], "rejestr")] + [(p, "strona firmy") for p in site.get("phones", "").split("; ")] + [(place.get("phone", ""), "Mapy Google")] \
+            + [(clean_phone(p), "wyszukiwarka") for p in search_hit.get("phones", [])] + [(clean_phone(gus_hit.get("phone")), "GUS")]
+        emails = [(firm["email"], "rejestr")] + [(e, "strona firmy") for e in site.get("emails", "").split("; ")] \
+            + [(clean_email(e), "wyszukiwarka") for e in search_hit.get("emails", [])] + [(clean_email(gus_hit.get("email")), "GUS")]
+        phone, phone_source, other_phones, other_phone_sources = merge_contacts(phones)
+        email, email_source, other_emails, other_email_sources = merge_contacts(emails)
         website = site.get("final_url", "") or (f"https://{firm['site']}" if firm["site_source"] == "rejestr" else "")
         lead = next((p for p in people if p["name"]), people[0] if people else None)
         row.update(
             phone=phone, phone_source=phone_source, email=email, email_source=email_source,
-            other_phones="; ".join(p for p in site_phones if p != phone), other_emails="; ".join(e for e in site_emails if e != email),
+            other_phones=other_phones, other_phone_sources=other_phone_sources, other_emails=other_emails, other_email_sources=other_email_sources,
             website=website, contact_url=site.get("contact_url", ""),
             contact_person=(lead["name"] if lead else ""), contact_role=(nice_name(lead["role"]) if lead else ""),
             contact_initials=(lead["initials"] if lead and not lead["name"] else ""),
@@ -575,7 +587,7 @@ def score(row):
 
 COLUMNS = ["tier", "priority", "fit", "capacity", "timing", "reach", "action", "product", "size_band", "changes", "name", "nip", "source", "source_id", "legal_form", "status",
            "verification", "voivodeship", "county", "municipality", "city", "street", "postal_code", "post_office", "contact_person", "contact_role",
-           "contact_person_source", "contact_initials", "phone", "phone_source", "email", "email_source", "other_phones", "other_emails", "website", "contact_url",
+           "contact_person_source", "contact_initials", "phone", "phone_source", "email", "email_source", "other_phones", "other_phone_sources", "other_emails", "other_email_sources", "website", "contact_url",
            "all_tags", "reasons", "warnings", "blockers", "opening", "started", "main_pkd", "pkd_count", "share_capital", "latest_filing_year",
            "eu_count", "eu_value", "maps_url", "people_json", "eu_json"]
 

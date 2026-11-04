@@ -164,7 +164,10 @@ function openPanel(nip) {
     const panel = document.getElementById('panel');
     const site = safeUrl(l.website), contactPage = safeUrl(l.contact_url);
     const contactLine = (href, text, source) => `<div class="contact-line"><a class="phone" href="${esc(href)}">${esc(text)}</a>${source ? `<small>${esc(source)}</small>` : ''}</div>`;
-    const extra = (text, prefix) => (text || '').split('; ').filter(Boolean).map(v => contactLine(prefix + v.replace(prefix === 'tel:' ? /\s/g : '', ''), v, 'strona firmy')).join('');
+    const extra = (text, sources, prefix) => {
+        const labels = (sources || '').split('; ');
+        return (text || '').split('; ').filter(Boolean).map((v, i) => contactLine(prefix + v.replace(prefix === 'tel:' ? /\s/g : '', ''), v, labels[i])).join('');
+    };
 
     panel.innerHTML = `
         <button class="panel-close" id="panelClose" aria-label="Zamknij">✕</button>
@@ -176,9 +179,9 @@ function openPanel(nip) {
         <div class="panel-sec">
             <h3>Kontakt</h3>
             ${l.phone ? contactLine('tel:' + l.phone.replace(/\s/g, ''), l.phone, l.phone_source) : ''}
-            ${extra(l.other_phones, 'tel:')}
+            ${extra(l.other_phones, l.other_phone_sources, 'tel:')}
             ${l.email ? contactLine('mailto:' + l.email, l.email, l.email_source) : ''}
-            ${extra(l.other_emails, 'mailto:')}
+            ${extra(l.other_emails, l.other_email_sources, 'mailto:')}
             ${!l.phone && !l.email ? '<p class="sub">Brak telefonu i e-maila w naszych źródłach.</p>' : ''}
             <div class="link-row">
                 ${site ? `<a href="${esc(site)}" target="_blank" rel="noopener noreferrer">Strona firmy</a>` : ''}

@@ -3,10 +3,11 @@ import unittest
 
 import pandas as pd
 
-from build_leads import blockers, pair_in_words, product_for, resolve_name, role_rank, size_band
+from build_leads import blockers, merge_contacts, pair_in_words, product_for, resolve_name, role_rank, size_band
 from contacts import clean_email, clean_phone, clean_site, email_domain, mask_fits
 from fetch_eu_projects import classify, core_of, normalize
 from crawl_websites import name_in_domain
+from gus_regon import Client, GusError
 from web_search import extract, is_directory, select_firms
 
 
@@ -130,6 +131,8 @@ class Size(unittest.TestCase):
         self.assertEqual(size_band({**sole, "website": "https://tartak.pl"}), "pasuje")
         self.assertEqual(size_band({**sole, "eu_value": 100_000}), "pasuje")
         self.assertEqual(size_band({**sole, "extra_sites": True}), "pasuje")
+        self.assertEqual(size_band({**sole, "local_units": 1}), "mała")
+        self.assertEqual(size_band({**sole, "local_units": 2}), "pasuje")
         self.assertEqual(size_band({**sole, "website": "https://tartak.pl", "verification": "ZWOLNIONY"}), "mała")
 
 
@@ -137,6 +140,52 @@ class Blockers(unittest.TestCase):
     def test_closed_firm_blocked(self):
         row = dict(status="AKTYWNY", liquidation=False, bankruptcy=True, dissolved=False, suspended=False, verification="CZYNNY")
         self.assertEqual(blockers(row), ["Upadłość"])
+
+
+class MergeContacts(unittest.TestCase):
+    def test_existing_number_stays_main_and_different_one_is_added(self):
+        found = [("601 000 000", "wyszukiwarka"), ("602 000 000", "GUS")]
+        self.assertEqual(merge_contacts(found), ("601 000 000", "wyszukiwarka", "602 000 000", "GUS"))
+
+    def test_same_number_is_not_repeated(self):
+        found = [("601 000 000", "rejestr"), ("601000000", "GUS")]
+        self.assertEqual(merge_contacts(found), ("601 000 000", "rejestr", "", ""))
+
+    def test_fills_a_gap(self):
+        self.assertEqual(merge_contacts([("", "rejestr"), ("602 000 000", "GUS")]), ("602 000 000", "GUS", "", ""))
+
+    def test_nothing_found(self):
+        self.assertEqual(merge_contacts([("", "rejestr")]), ("", "", "", ""))
+
+
+class FakeGus(Client):
+    """Replies are consumed in order; the search and GetValue replies alternate when nothing is found."""
+    def __init__(self, replies):
+        self.replies, self.logins = list(replies), 0
+
+    def call(self, operation, body, *_):
+        return self.replies.pop(0)
+
+    def login(self):
+        self.logins += 1
+
+
+class GusFetch(unittest.TestCase):
+    ROW = "<root><dane><Regon>1</Regon></dane></root>"
+
+    def test_real_not_found_is_empty(self):
+        client = FakeGus(["", "4"])
+        self.assertEqual(client.fetch("Search", ""), [])
+        self.assertEqual(client.logins, 0)
+
+    def test_dropped_session_logs_in_and_retries(self):
+        client = FakeGus(["", "", self.ROW])
+        self.assertEqual(client.fetch("Search", ""), [{"Regon": "1"}])
+        self.assertEqual(client.logins, 1)
+
+    def test_lasting_failure_raises_instead_of_not_found(self):
+        with self.assertRaises(GusError):
+            FakeGus(["", "", "", ""]).fetch("Search", "")
 
 
 if __name__ == "__main__":

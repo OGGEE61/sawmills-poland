@@ -122,7 +122,7 @@ venv/bin/python src/enrichment/tests_leads.py    # unit tests
 
 Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażowa" tab holds the ready-made lists and CSV export.
 
-Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`. `refresh.sh` caps Google Places at 1,000 and web search at 50 lookups per run (`SEARCH_LIMIT`). Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
+Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`, so run `set -a; . ./.env; set +a` first if the key is kept there. `refresh.sh` caps Google Places at 1,000 and web search at 50 lookups per run (`SEARCH_LIMIT`). Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
 
 Web search takes the best tier first and, within a tier, firms with no contact at all first. It skips firms already searched. If both search keys are set, SearchApi is used, so set only one. To run a batch:
 
@@ -148,7 +148,7 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 | Firm websites | `crawl_websites.py` | phones, emails, waste/heat/machine keywords, names fitting KRS masks | nothing |
 | Wider market | `expand_market.py` | pallets, joinery, flooring, furniture, forestry companies | nothing. Sole traders outside 16.10 need a new CEIDG run with a token |
 | New KRS numbers | `walk_krs.py`, `merge_walk.py` | companies registered after 2022 | nothing |
-| GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested on GUS's test server |
+| GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested live |
 | Google Maps | `google_places.py` | phone, website, Maps link | `GOOGLE_PLACES_KEY` (billed). Tested on a stub only |
 | Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` or `SERPER_API_KEY` (both tested live). Billed |
 
