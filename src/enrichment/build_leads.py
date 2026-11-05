@@ -472,6 +472,7 @@ def build_rows():
     sites = load_sites()
     searched = load_search()
     gus = load_optional("gus.csv")
+    gus_pkd = load_optional("gus_pkd.csv")
     places = load_optional("places.csv")
 
     rows = []
@@ -501,7 +502,7 @@ def build_rows():
                 municipality=sig.get("municipality_raw", ""), city=base.get("city", ""),
                 street=" ".join(x for x in (base.get("street", ""), base.get("building_no", "")) if x),
                 postal_code=base.get("postal_code", ""), post_office=base.get("post_office", ""), started=base.get("registration_date", ""),
-                main_pkd=sig.get("main_pkd", "") or base.get("pkd_main", ""), pkd_count=int(number(sig.get("pkd_count"))),
+                main_pkd=sig.get("main_pkd", "") or base.get("pkd_main", "") or gus_pkd.get(nip, {}).get("main_pkd", ""), pkd_count=int(number(sig.get("pkd_count"))),
                 all_pkd=sig.get("all_pkd", ""), share_capital=number(sig.get("share_capital_pln")),
                 latest_filing_year=int(number(sig.get("latest_filing_year"))), filings_count=int(number(sig.get("filings_count"))),
                 branches=int(number(sig.get("branches"))), open_arrears=int(number(sig.get("open_arrears"))), extra_sites=False,

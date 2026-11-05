@@ -3,6 +3,7 @@
 Needs a free key from GUS: https://api.stat.gov.pl/Home/RegonApi (the "BIR1" API, version 1.1).
 
 Usage: GUS_API_KEY=... gus_regon.py [limit]    real register, highest-priority firms first; resumable
+       GUS_API_KEY=... gus_regon.py --pkd      main PKD of companies KRS gives none for -> gus_pkd.csv; resumable
        gus_regon.py --test NIP [NIP ...]       GUS's public test server and test key; prints, writes nothing
 """
 import csv
@@ -19,12 +20,14 @@ import requests
 
 PROCESSED = Path(__file__).resolve().parents[2] / "data" / "processed"
 OUTPUT = PROCESSED / "gus.csv"
+PKD_OUTPUT = PROCESSED / "gus_pkd.csv"
 LIVE_URL = "https://wyszukiwarkaregon.stat.gov.pl/wsBIR/UslugaBIRzewnPubl.svc"
 TEST_URL = "https://wyszukiwarkaregontest.stat.gov.pl/wsBIR/UslugaBIRzewnPubl.svc"
 TEST_KEY = "abcde12345abcde12345"  # published by GUS for the test server, not a secret
 DELAY = 0.5
 SESSION_SECONDS = 50 * 60  # GUS sessions expire after an hour
 FIELDS = ["nip", "found", "regon", "phone", "email", "website", "local_units", "checked_on"]
+PKD_FIELDS = ["nip", "main_pkd", "checked_on"]
 ACTION = "http://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/"
 NAMESPACES = ('xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ns="http://CIS/BIR/PUBL/2014/07" '
               'xmlns:dat="http://CIS/BIR/PUBL/2014/07/DataContract" xmlns:g="http://CIS/BIR/2014/07"')
@@ -93,6 +96,10 @@ class Client:
         return {"found": True, "regon": regon, "phone": data.get(f"{prefix}numerTelefonu", ""), "email": data.get(f"{prefix}adresEmail", ""),
                 "website": data.get(f"{prefix}adresStronyinternetowej", ""), "local_units": units.get(f"{prefix}liczbaJednLokalnych", "")}
 
+    def main_pkd(self, regon):
+        codes = self.fetch("DanePobierzPelnyRaport", f"<ns:pRegon>{regon}</ns:pRegon><ns:pNazwaRaportu>BIR11OsPrawnaPkd</ns:pNazwaRaportu>")
+        return dotted_pkd(next((c.get("praw_pkdKod", "") for c in codes if c.get("praw_pkdPrzewazajace") == "1"), ""))
+
     def report(self, regon, name):
         data = self.fetch("DanePobierzPelnyRaport", f"<ns:pRegon>{regon}</ns:pRegon><ns:pNazwaRaportu>{name}</ns:pNazwaRaportu>")
         return data[0] if data else {}
@@ -106,6 +113,34 @@ def rows(text):
             if item.find("ErrorCode") is None]
 
 
+def dotted_pkd(code):
+    return f"{code[:2]}.{code[2:4]}.{code[4:]}" if code else ""
+
+
+def fill_main_pkd(key):
+    leads = pd.read_csv(PROCESSED / "leads.csv", dtype=str).fillna("")
+    regons = pd.read_csv(OUTPUT, dtype=str).fillna("").set_index("nip")["regon"]
+    firms = [nip for nip in leads[(leads["source"] == "KRS") & (leads["main_pkd"] == "")]["nip"] if regons.get(nip)]
+    write_header = not PKD_OUTPUT.exists()
+    if PKD_OUTPUT.exists():
+        done = set(pd.read_csv(PKD_OUTPUT, dtype=str)["nip"])
+        firms = [nip for nip in firms if nip not in done]
+    print(f"{len(firms)} firms to look up")
+    client = Client(LIVE_URL, key)
+    with open(PKD_OUTPUT, "a", newline="", encoding="utf-8") as out:
+        writer = csv.DictWriter(out, PKD_FIELDS)
+        if write_header:
+            writer.writeheader()
+        for nip in firms:
+            try:
+                writer.writerow({"nip": nip, "main_pkd": client.main_pkd(regons[nip]), "checked_on": time.strftime("%Y-%m-%d")})
+            except requests.RequestException as error:
+                print(f"Stopping on API error: {error}")
+                return
+            out.flush()
+            time.sleep(DELAY)
+
+
 def main():
     if sys.argv[1:2] == ["--test"]:
         client = Client(TEST_URL, TEST_KEY)
@@ -116,6 +151,9 @@ def main():
     key = os.environ.get("GUS_API_KEY")
     if not key:
         sys.exit("Set GUS_API_KEY, or use --test NIP.")
+    if sys.argv[1:2] == ["--pkd"]:
+        fill_main_pkd(key)
+        return
     limit = int(sys.argv[1]) if len(sys.argv) > 1 else None
     leads = pd.read_csv(PROCESSED / "leads.csv", dtype=str).fillna("")
     firms = leads[leads["tier"] != "X"]["nip"]

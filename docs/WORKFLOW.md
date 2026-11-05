@@ -122,7 +122,7 @@ venv/bin/python src/enrichment/tests_leads.py    # unit tests
 
 Then open http://localhost:8000/src/dashboard/index.html. The "Lista sprzedażowa" tab holds the ready-made lists and CSV export.
 
-Keys are read from the environment (`export GUS_API_KEY=...`); scripts do not load `.env`, so run `set -a; . ./.env; set +a` first if the key is kept there. `refresh.sh` caps Google Places at 1,000 and web search at 50 lookups per run (`SEARCH_LIMIT`). Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
+Keys are read from the environment (`export GUS_API_KEY=...`); single scripts do not load `.env`, so run `set -a; . ./.env; set +a` first if the key is kept there. `refresh.sh` loads `.env` itself, so a search key kept there bills up to `SEARCH_LIMIT` lookups each run. `refresh.sh` caps Google Places at 1,000 and web search at 50 lookups per run (`SEARCH_LIMIT`). Called directly without a limit, those scripts process every eligible firm and can bill for all of them.
 
 Web search takes the best tier first and, within a tier, firms with no contact at all first. It skips firms already searched. If both search keys are set, SearchApi is used, so set only one. To run a batch:
 
@@ -149,6 +149,7 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 | Wider market | `expand_market.py` | pallets, joinery, flooring, furniture, forestry companies | nothing. Sole traders outside 16.10 need a new CEIDG run with a token |
 | New KRS numbers | `walk_krs.py`, `merge_walk.py` | companies registered after 2022 | nothing |
 | GUS REGON | `gus_regon.py` | phone, email, website, local units | `GUS_API_KEY` (free). Tested live |
+| GUS REGON, main PKD | `gus_regon.py --pkd` | main activity of companies KRS gives none for | `GUS_API_KEY`. Fills `gus_pkd.csv` |
 | Google Maps | `google_places.py` | phone, website, Maps link | `GOOGLE_PLACES_KEY` (billed). Tested on a stub only |
 | Web search | `web_search.py` | websites, contact snippets about the right firm | `SEARCHAPI_KEY` or `SERPER_API_KEY` (both tested live). Billed |
 
@@ -162,6 +163,5 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 
 ## What is committed to git
 - Committed: all code, `docs/`, and the older CSVs in `data/processed/`.
-- **Not committed yet:** `master.csv`, `enrichment_bialalista.csv`, `verification.csv`. They contain board-member names; decide before pushing to a public repo. The dashboard's VAT features need `verification.csv`. `.gitignore` allows `data/processed/*.csv`, so `git add .` **would** add these three.
-- **Git-ignored on purpose:** `leads.csv`, `krs_signals.csv`, `eu_projects.csv`, `website_contacts.csv`, `expansion_*.csv`, `gus.csv`, `places.csv`, `data/raw/external/`. They hold names and contacts, and the Cloudflare build publishes every committed CSV, so the public site shows a "missing file" note on the sales list.
+- **Git-ignored on purpose:** `leads.csv`, `master.csv`, `verification.csv`, `enrichment_bialalista.csv`, `gus_pkd.csv`, `krs_signals.csv`, `eu_projects.csv`, `website_contacts.csv`, `expansion_*.csv`, `gus.csv`, `places.csv`, `data/raw/external/`. They hold names and contacts, and the Cloudflare build publishes every committed CSV, so the public site shows a "missing file" note on the sales list.
 - Never committed (ignored): `data/raw/`, `*.json`, `*.jsonl`.

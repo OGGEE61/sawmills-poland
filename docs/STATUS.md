@@ -1,15 +1,15 @@
-# Project status — 2026-11-03
+# Project status — 2026-11-05
 
 **Goal:** sell wood chippers and briquette machines to Polish firms with wood waste. Run and refresh: `docs/WORKFLOW.md`, Step 4. Nothing below the line has been re-checked since 2026-10-19.
 
 | Live firms (8,907) | Phone | Email | Website | Full contact name | Role only |
 |---|---|---|---|---|---|
-| KRS (4,410) | 362 | 970 | 514 | 337 | 4,018 |
-| CEIDG (4,497) | 1,019 | 963 | 231 | 4,497 | - |
+| KRS (4,410) | 1,398 | 1,492 | 565 | 349 | 4,006 |
+| CEIDG (4,497) | 1,024 | 981 | 235 | 4,497 | - |
 
-- Target: 0.5-2 t/h machines, Weima sub-brand for small clients, but still big machines: micro firms are not the target (user, 2026-11-02). Big firms and very small ones are kept out of tiers A and B. A sole trader needs its own website, an EU project or a second address to count as the right size; the second address is a weak sign.
-- Tiers: A 91, B 555, C 2538, D 5723, X 1152 (closing or closed). Of A+B (418 sole traders, 228 companies): 359 have a phone, 62 email only, 225 need research.
-- Search API: 1,566 firms searched, 99 with SearchApi.io and 1,467 with Serper. The last batch of 512 (A, B, then the best of C) went from 0 to 177 phones. 215 live phones come from search snippets, so check them on the first call. Serper has 1,032 free queries left. Sole traders without another sign of scale are no longer searched, so a website could raise only those already searched.
+- Target: 0.5-2 t/h machines, Weima sub-brand for small clients, but still big machines: micro firms are not the target (user, 2026-11-02). Big firms and very small ones are kept out of tiers A and B. A sole trader needs its own website, an EU project, a second address or at least 2 GUS local units to count as the right size; the second address is a weak sign.
+- Tiers: A 100, B 579, C 2591, D 5637, X 1152 (closing or closed). Of A+B (446 sole traders, 233 companies): 423 have a phone, 60 email only, 196 no contact. All A+B firms in the search queue have now been searched.
+- Search API: 1,657 firms searched, 99 with SearchApi.io and 1,558 with Serper (the last 91 on 2026-11-05: every A+B firm left in the queue). The last batch of 512 (A, B, then the best of C) went from 0 to 177 phones. 214 live main phones come from search snippets, so check them on the first call. Serper has 941 free queries left. Sole traders without another sign of scale are no longer searched, so a website could raise only those already searched.
 - EU projects, right-sized firms: 25 have a recent waste/biomass/GOZ project, 11 a recent machinery project.
 - Wider market: finished. 15,317 candidates read, 1,564 companies kept and merged; 1,542 were new to the list. No further PKD codes for now.
 - Companies registered after 2022 (2026-11-03): sprawdz-firme.pl lists almost none after about November 2022, so KRS numbers 1,000,000-1,275,000 were read one by one from the official API. 1,489 in-scope firms merged (wood, forestry, or a secondary sawmill code), 1,483 on the list: A 15, B 67, C 544, D 704, X 153. Only 54 have a phone and 354 an email, and no paid search was run for them. Furniture and landscaping found in the same run were left out on the user's decision. They remain in `expansion_walk_firms.csv`.
@@ -18,23 +18,27 @@
 **Known limits**
 - KRS API speed: no published limit found. 15 requests/s from one IP drew no 429 over about 226,000 reads, but that is observed, not a stated allowance.
 - Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
+- `master.csv`, `verification.csv`, `enrichment_bialalista.csv` hold board-member names, so they stay local and git-ignored (2026-11-05). The public site's VAT column stays empty.
 - Project type is keyword-based; EU matches are by name (no NIP in the lists).
 - Waste volume is not known for any firm: PKD and website words are stand-ins.
 - KRS API masks names. For most companies we know the role and initials only.
 - Financial statements (RDF) return 403 from bot protection to scripts. Not worked around; no revenue or headcount.
 - Left out, no bulk route that scripts may use: BDO, RDF, FSC, ARiMR. We plan only what can be automated (user, 2026-11-02). Also skipped: job ads, the e-drewno buyer list (unverified that it exists), PEFC, dane.gov.pl farm-beneficiary list (dead 2017 link).
 - Sole traders outside 16.10/16.11 are missing until CEIDG is re-run with a token.
+- Main PKD: KRS gives none for 607 companies. `gus_regon.py --pkd` filled all 472 live ones (2026-11-05); 28 moved up a tier, 2 of them to B. The 135 still blank are tier X.
 - GUS: full run done 2026-11-04 on 8,907 firms: 1,000 new main phones, 496 new main emails. GUS never replaces a contact we already had; a different one goes in `other_phones` / `other_emails`. A sole trader needs at least 2 local units to count as multi-site: 30% have one, too common to mean size (user-approved judgement, no sales data). Places: tested on a stub only. SearchApi.io and Serper: tested live.
 
-**Needs you:** revoke the old CEIDG token (in git history); new CEIDG token (call +48 222 500 123 to get it; CEIDG support is checking bulk access); fix GitHub to Cloudflare auto-deploy; decide on `master.csv`, `verification.csv`, `enrichment_bialalista.csv`.
+**Needs you:** new CEIDG token (biznes.gov.pl confirmed the old one is deactivated, 2026-11-05; call +48 222 500 123, CEIDG support is checking bulk access).
+
+**Later (not blocking, manual deploy with wrangler works):** turn on GitHub to Cloudflare auto-deploy. The user needs the GitHub password from their home PC. At https://github.com/settings/installations (account settings, not the repo): Cloudflare Pages -> Configure -> Repository access -> add `sawmills-poland` -> Save. Test by pushing a commit to `main`.
 
 **Next**
-0. Contacts for the new firms: the 82 new A+B firms are the place to spend search queries.
+0. Search queue: A+B is done. Remaining Serper queries would go to tier C, which is optional.
 1. For now the tool is for the user only, so the full list stays local. The public site has registry data only.
 2. The user confirmed the top 15 firms with a phone as firms worth contacting (2026-11-02), so the size rule stays. This is a judgement, not sales data: review it after the first conversations.
 3. Spend the remaining Serper queries only on strong companies, if contacts run short.
 4. Use Google Places (billed) only if search leaves too many strong firms without a phone.
-5. When the CEIDG key arrives, run GUS first. Do not run `fetch_data.py --wood` by default: it adds thousands of small sole traders.
+5. When the CEIDG key arrives, run `fetch_data.py --update`, then `refresh.sh`: GUS looks up only the new firms. Do not run `fetch_data.py --wood` by default: it adds thousands of small sole traders.
 
 ---
 

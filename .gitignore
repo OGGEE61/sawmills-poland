@@ -30,3 +30,7 @@ data/processed/expansion_*.csv
 data/processed/tartaki_ceidg_wood.csv
 data/processed/gus.csv
 data/processed/places.csv
+data/processed/gus_pkd.csv
+data/processed/master.csv
+data/processed/verification.csv
+data/processed/enrichment_bialalista.csv

@@ -7,7 +7,7 @@ from build_leads import blockers, merge_contacts, pair_in_words, product_for, re
 from contacts import clean_email, clean_phone, clean_site, email_domain, mask_fits
 from fetch_eu_projects import classify, core_of, normalize
 from crawl_websites import name_in_domain
-from gus_regon import Client, GusError
+from gus_regon import Client, GusError, dotted_pkd
 from web_search import extract, is_directory, select_firms
 
 
@@ -172,6 +172,10 @@ class FakeGus(Client):
 
 class GusFetch(unittest.TestCase):
     ROW = "<root><dane><Regon>1</Regon></dane></root>"
+
+    def test_main_pkd_format_matches_krs(self):
+        self.assertEqual(dotted_pkd("1610Z"), "16.10.Z")
+        self.assertEqual(dotted_pkd(""), "")
 
     def test_real_not_found_is_empty(self):
         client = FakeGus(["", "4"])
