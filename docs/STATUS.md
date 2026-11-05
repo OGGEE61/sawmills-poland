@@ -18,7 +18,7 @@
 **Known limits**
 - KRS API speed: no published limit found. 15 requests/s from one IP drew no 429 over about 226,000 reads, but that is observed, not a stated allowance.
 - Scoring, size limits and the machine offered (`WASTE_RULES`) are assumptions with no sales data behind them. Stationary machines are assumed, so forestry and landscaping rank low. Almost all A+B firms get "Rębak + brykieciarka", so the offer does not yet discriminate for sawmills.
-- `master.csv`, `verification.csv`, `enrichment_bialalista.csv` hold board-member names, so they stay local and git-ignored (2026-11-05). The public site's VAT column stays empty.
+- `master.csv` and `enrichment_bialalista.csv` hold board-member names and stay local and git-ignored. The site does not need them.
 - Project type is keyword-based; EU matches are by name (no NIP in the lists).
 - Waste volume is not known for any firm: PKD and website words are stand-ins.
 - KRS API masks names. For most companies we know the role and initials only.
@@ -34,7 +34,7 @@
 
 **Next**
 0. Search queue: A+B is done. Remaining Serper queries would go to tier C, which is optional.
-1. For now the tool is for the user only, so the full list stays local. The public site has registry data only.
+1. The tool is for the user only, but the full list is published without a login (user's decision, 2026-11-05): `leads.csv` and `verification.csv` are public on GitHub and on the site.
 2. The user confirmed the top 15 firms with a phone as firms worth contacting (2026-11-02), so the size rule stays. This is a judgement, not sales data: review it after the first conversations.
 3. Spend the remaining Serper queries only on strong companies, if contacts run short.
 4. Use Google Places (billed) only if search leaves too many strong firms without a phone.

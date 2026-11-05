@@ -163,5 +163,6 @@ sh src/enrichment/refresh.sh                               # merge what was foun
 
 ## What is committed to git
 - Committed: all code, `docs/`, and the older CSVs in `data/processed/`.
-- **Git-ignored on purpose:** `leads.csv`, `master.csv`, `verification.csv`, `enrichment_bialalista.csv`, `gus_pkd.csv`, `krs_signals.csv`, `eu_projects.csv`, `website_contacts.csv`, `expansion_*.csv`, `gus.csv`, `places.csv`, `data/raw/external/`. They hold names and contacts, and the Cloudflare build publishes every committed CSV, so the public site shows a "missing file" note on the sales list.
+- **Published on purpose (user's decision, 2026-11-05):** `leads.csv` and `verification.csv` are committed, so they are public on GitHub and on the site, including names and contacts. After a refresh, commit both, push and deploy to update the site.
+- **Git-ignored on purpose:** `master.csv`, `enrichment_bialalista.csv`, `gus_pkd.csv`, `krs_signals.csv`, `eu_projects.csv`, `website_contacts.csv`, `expansion_*.csv`, `gus.csv`, `places.csv`, `data/raw/external/`. They hold names and contacts, and the Cloudflare build publishes every committed CSV, so the public site shows a "missing file" note on the sales list.
 - Never committed (ignored): `data/raw/`, `*.json`, `*.jsonl`.
