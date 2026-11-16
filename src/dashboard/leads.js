@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => { if (!res.ok || (res.headers.get('content-type') || '').includes('html')) throw new Error(res.status); return res.text(); })
         .then(init)
         .catch(() => {
-            document.getElementById('dataNote').textContent = 'Brak pliku leads.csv. Lista zawiera dane osobowe, więc nie ma jej w repozytorium: uruchom lokalnie src/enrichment/build_leads.py.';
+            document.getElementById('dataNote').textContent = 'Brak listy sprzedażowej w bazie. Uruchom odświeżanie (docs/DEPLOY.md) albo lokalnie src/enrichment/build_leads.py.';
             document.getElementById('dataNote').style.color = 'var(--danger)';
         });
 });

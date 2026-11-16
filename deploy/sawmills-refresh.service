@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh the sawmills sales list and reload the database
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sawmills-poland
+ExecStart=/usr/bin/docker compose --profile jobs run --rm scraper

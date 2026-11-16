@@ -1,0 +1,8 @@
+.git
+.env
+.wrangler
+venv
+data
+docs
+deploy
+**/__pycache__

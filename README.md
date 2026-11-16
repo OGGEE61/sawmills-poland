@@ -4,12 +4,26 @@ Finds and ranks Polish firms with wood waste as buyers of wood chippers and briq
 
 This project provides tools to fetch, process, and visualize data about active sawmills (tartaki) from both the Polish CEIDG (Osoby fizyczne) API v3 and the official KRS (Spółki) via custom scraper.
 
+## Deploying on the company server
+
+Production runs with Docker Compose on a Linux server: nginx (the only published port, restricted to the company wifi subnet), the app, PostgreSQL 16, and a scraper job that refreshes the data monthly.
+
+```
+cp .env.example .env        # set POSTGRES_PASSWORD and ALLOWED_CIDR (the wifi subnet)
+docker compose up -d --build
+```
+
+Before the first start you also need to copy `data/` to the server and load the database. **Full steps, how the wifi restriction works and its limits, the monthly scraper timer and a local-vs-server comparison: [docs/DEPLOY.md](docs/DEPLOY.md).**
+
+For local development no Docker is needed: `venv/bin/python run_dashboard.py` serves the dashboard from the CSV files.
+
 ## Features
 
 * **Data Sourcing CEIDG (`src/ceidg_scraper/fetch_data.py`)**: Queries the CEIDG API for businesses registered under target PKD codes.
 * **Data Sourcing KRS (`src/krs_scraper/proxy_discover_all.py` & `krs_tartaki.py`)**: Uses proxies to find target companies and verifies them against the official KRS MS API.
 * **Dashboard (`src/dashboard/index.html`)**: A web interface for visualizing both datasets, featuring a dynamic heat map of Poland.
-* **Local Web Server (`run_dashboard.py`)**: A simple Python server to launch the dashboard.
+* **Local Web Server (`run_dashboard.py`)**: A simple Python server to launch the dashboard from the CSV files (development only).
+* **Production server (`docker-compose.yml`, `src/server/`)**: serves the same dashboard from PostgreSQL, see above.
 
 ## Directory Structure
 ```text

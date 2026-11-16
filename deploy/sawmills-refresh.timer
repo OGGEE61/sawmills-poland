@@ -1,0 +1,9 @@
+[Unit]
+Description=Monthly refresh of the sawmills sales list
+
+[Timer]
+OnCalendar=*-*-01 03:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

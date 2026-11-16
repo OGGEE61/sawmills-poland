@@ -1,0 +1,62 @@
+# On-prem deployment. Only nginx publishes a port; the database and the app are reachable inside the Docker network only.
+#   cp .env.example .env   (fill it in)   then   docker compose up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sawmills
+      POSTGRES_USER: sawmills
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sawmills -d sawmills"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    environment: &pg
+      PGHOST: db
+      PGDATABASE: sawmills
+      PGUSER: sawmills
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    environment:
+      ALLOWED_CIDR: ${ALLOWED_CIDR:?set ALLOWED_CIDR in .env to the company wifi subnet}
+    volumes:
+      - ./deploy/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./deploy/index.html:/srv/index.html:ro
+      - ./src/dashboard:/srv/src/dashboard:ro
+    depends_on:
+      - app
+
+  # Not started by `up`. Refresh the sales list and reload the database:
+  #   docker compose --profile jobs run --rm scraper
+  # The lock stops a second run from starting while one is still going (a run takes well over half an hour).
+  scraper:
+    build: .
+    profiles: ["jobs"]
+    env_file: .env
+    environment:
+      <<: *pg
+    working_dir: /app
+    volumes:
+      - ${DATA_DIR:-./data}:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["flock", "-n", "/app/data/.refresh.lock", "sh", "src/enrichment/refresh.sh"]
+
+volumes:
+  pgdata:

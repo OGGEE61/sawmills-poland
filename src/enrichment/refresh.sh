@@ -3,13 +3,14 @@
 # build_leads.py compares with the previous leads.csv, so changes appear in the dashboard's "Zmiany" list.
 # Optional sources run first when their key is set in the environment. To re-read every website: delete website_contacts.csv.
 set -e
-PY="venv/bin/python -W ignore"
+PYTHON="${PYTHON:-$PWD/venv/bin/python}"   # the Docker image sets PYTHON=python
+PY="$PYTHON -W ignore"
 E=src/enrichment
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
 
 # newly registered companies: sprawdz-firme.pl barely lists them, so read the new KRS numbers directly
 if [ -f data/processed/expansion_walk_checked.csv ]; then
-    (cd $E && ../../venv/bin/python -W ignore walk_krs.py --new && ../../venv/bin/python -W ignore merge_walk.py)
+    (cd $E && $PY walk_krs.py --new && $PY merge_walk.py)
 fi
 $PY $E/build_master.py
 $PY $E/bialalista.py
@@ -26,3 +27,5 @@ if [ -n "${SERPER_API_KEY:-}${SEARCHAPI_KEY:-}" ]; then $PY $E/web_search.py "${
 
 $PY $E/crawl_websites.py
 $PY $E/build_leads.py
+# on the server (PGHOST set) the dashboard reads PostgreSQL, so load the fresh files into it
+if [ -n "${PGHOST:-}" ]; then $PY src/server/load_db.py; fi

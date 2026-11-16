@@ -1,0 +1,28 @@
+# Access rule: only ALLOWED_CIDR (the company wifi subnet) and the server itself get an answer; everyone else gets 403.
+# Do not use `return` or `rewrite` for pages here: they run before allow/deny and would answer anyone.
+server {
+    listen 80 default_server;
+    server_tokens off;
+
+    allow 127.0.0.1;
+    allow ${ALLOWED_CIDR};
+    deny all;
+
+    root /srv;
+    gzip on;
+    gzip_types text/csv text/css application/javascript;
+
+    # one page that sends the browser on to the dashboard
+    location = / { try_files /index.html =404; }
+
+    location /src/dashboard/ { try_files $uri =404; }
+
+    location /data/processed/ {
+        proxy_pass http://app:8000;
+        proxy_read_timeout 120s;
+    }
+
+    location = /healthz { proxy_pass http://app:8000; }
+
+    location / { return 404; }
+}
